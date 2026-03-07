@@ -1,4 +1,5 @@
 import { ConvexBetterAuthProvider } from "@convex-dev/better-auth/react";
+import { GoogleSignin } from "@react-native-google-signin/google-signin";
 import { DarkTheme, DefaultTheme, ThemeProvider } from "@react-navigation/native";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
@@ -7,6 +8,13 @@ import "react-native-reanimated";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { authClient } from "@/lib/auth-client";
 import { convex } from "@/lib/convex";
+
+GoogleSignin.configure({
+  iosClientId:
+    "436999476070-l97q7s44m1p9irm4ve8objjm0dt11pgn.apps.googleusercontent.com",
+  webClientId:
+    "436999476070-7gcd35jrbfkreu1smj4oo3k16e7n1nkb.apps.googleusercontent.com",
+});
 
 export const unstable_settings = {
   anchor: "(tabs)",

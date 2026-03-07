@@ -42,9 +42,7 @@ export function useSocialAuth() {
         } else if (code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
           Alert.alert("Play services not available");
         } else {
-          Alert.alert(
-            (error as Error).message || "Google sign-in error"
-          );
+          Alert.alert((error as Error).message || "Google sign-in error");
         }
       } else if (error instanceof Error) {
         Alert.alert(error.message);
