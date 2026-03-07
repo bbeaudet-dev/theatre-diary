@@ -24,7 +24,12 @@ export default function SignInScreen() {
 
         <View style={styles.buttons}>
           <Pressable
-            style={[styles.button, styles.googleButton]}
+            style={({ pressed }) => [
+              styles.button,
+              styles.googleButton,
+              pressed && !loading && styles.buttonPressed,
+              loading && styles.buttonDisabled,
+            ]}
             onPress={signInWithGoogle}
             disabled={loading}
           >
@@ -35,7 +40,12 @@ export default function SignInScreen() {
 
           {Platform.OS === "ios" && (
             <Pressable
-              style={[styles.button, styles.appleButton]}
+              style={({ pressed }) => [
+                styles.button,
+                styles.appleButton,
+                pressed && !loading && styles.buttonPressed,
+                loading && styles.buttonDisabled,
+              ]}
               onPress={signInWithApple}
               disabled={loading}
             >
@@ -84,6 +94,13 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     minHeight: 52,
+  },
+  buttonPressed: {
+    opacity: 0.8,
+    transform: [{ scale: 0.98 }],
+  },
+  buttonDisabled: {
+    opacity: 0.5,
   },
   googleButton: {
     backgroundColor: "#fff",
