@@ -105,6 +105,7 @@ export const populateShows = internalMutation({
         name: show.name,
         type: show.type,
         images: [`${PORTFOLIO_BASE_URL}${show.image}`],
+        isUserCreated: false,
       });
       count++;
     }

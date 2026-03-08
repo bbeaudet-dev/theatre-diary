@@ -1,5 +1,5 @@
 import { useMutation, useQuery } from "convex/react";
-import { useState, useCallback, memo } from "react";
+import { useState, useCallback, useMemo, memo } from "react";
 import {
   Keyboard,
   Pressable,
@@ -19,43 +19,105 @@ import type { Id } from "@/convex/_generated/dataModel";
 
 type ViewMode = "list" | "cloud";
 
+type ShowType = "musical" | "play" | "opera" | "dance" | "other";
+
 type RankedShow = {
   _id: Id<"shows">;
   _creationTime: number;
   name: string;
-  type: "musical" | "play" | "opera" | "dance" | "other";
+  type: ShowType;
   subtype?: string;
   images: string[];
   tier?: "liked" | "neutral" | "disliked";
 };
 
+const MAX_RESULTS = 10;
+
+const TYPE_LABELS: Record<ShowType, string> = {
+  musical: "Musical",
+  play: "Play",
+  opera: "Opera",
+  dance: "Dance",
+  other: "Other",
+};
+
 const AddShowInput = memo(function AddShowInput() {
   const [isAdding, setIsAdding] = useState(false);
-  const [name, setName] = useState("");
+  const [query, setQuery] = useState("");
 
+  const allShows = useQuery(api.shows.list);
+  const rankings = useQuery(api.rankings.get);
   const createShow = useMutation(api.shows.create);
   const addToRankings = useMutation(api.rankings.addShow);
 
-  const handleSubmit = async () => {
-    const trimmed = name.trim();
-    if (!trimmed) {
-      setIsAdding(false);
-      return;
-    }
+  const rankedShowIds = useMemo(
+    () => new Set(rankings?.showIds ?? []),
+    [rankings?.showIds]
+  );
+
+  const filteredShows = useMemo(() => {
+    const trimmed = query.trim();
+    if (!trimmed || !allShows) return [];
+    const lower = trimmed.toLowerCase();
+    return allShows
+      .filter(
+        (show) =>
+          show.name.toLowerCase().includes(lower) &&
+          !rankedShowIds.has(show._id)
+      )
+      .sort((a, b) => {
+        const aStarts = a.name.toLowerCase().startsWith(lower);
+        const bStarts = b.name.toLowerCase().startsWith(lower);
+        if (aStarts !== bStarts) return aStarts ? -1 : 1;
+        return a.name.localeCompare(b.name);
+      })
+      .slice(0, MAX_RESULTS);
+  }, [query, allShows, rankedShowIds]);
+
+  const hasExactMatch = useMemo(() => {
+    const lower = query.trim().toLowerCase();
+    return (
+      lower.length > 0 &&
+      filteredShows.some((s) => s.name.toLowerCase() === lower)
+    );
+  }, [query, filteredShows]);
+
+  const handleSelectShow = async (showId: Id<"shows">) => {
+    await addToRankings({ showId, tier: "liked", position: Infinity });
+    setQuery("");
+    setIsAdding(false);
+    Keyboard.dismiss();
+  };
+
+  const handleCreateCustomShow = async () => {
+    const trimmed = query.trim();
+    if (!trimmed) return;
 
     const showId = await createShow({
       name: trimmed,
-      type: "musical",
+      type: "other",
       images: [],
+      isUserCreated: true,
     });
 
-    await addToRankings({
-      showId,
-      tier: "liked",
-      position: Infinity,
-    });
+    await addToRankings({ showId, tier: "liked", position: Infinity });
+    setQuery("");
+    setIsAdding(false);
+    Keyboard.dismiss();
+  };
 
-    setName("");
+  const handleSubmit = async () => {
+    if (filteredShows.length > 0) {
+      await handleSelectShow(filteredShows[0]._id);
+    } else if (query.trim()) {
+      await handleCreateCustomShow();
+    } else {
+      setIsAdding(false);
+    }
+  };
+
+  const handleCancel = () => {
+    setQuery("");
     setIsAdding(false);
     Keyboard.dismiss();
   };
@@ -70,33 +132,64 @@ const AddShowInput = memo(function AddShowInput() {
     );
   }
 
+  const showResults = query.trim().length > 0;
+  const showCreateOption = showResults && !hasExactMatch;
+
   return (
     <View style={styles.footer}>
-      <View style={styles.addInputRow}>
-        <TextInput
-          style={styles.addInput}
-          value={name}
-          onChangeText={setName}
-          placeholder="Show name..."
-          autoFocus
-          returnKeyType="done"
-          onSubmitEditing={handleSubmit}
-        />
-        <View style={styles.addActions}>
-          <Pressable
-            onPress={() => {
-              setName("");
-              setIsAdding(false);
-              Keyboard.dismiss();
-            }}
-            style={styles.cancelButton}
-          >
-            <Text style={styles.cancelText}>Cancel</Text>
-          </Pressable>
-          <Pressable onPress={handleSubmit} style={styles.confirmButton}>
-            <Text style={styles.confirmText}>Add</Text>
+      <View style={styles.searchContainer}>
+        <View style={styles.searchInputRow}>
+          <TextInput
+            style={styles.searchInput}
+            value={query}
+            onChangeText={setQuery}
+            placeholder="Search shows..."
+            autoFocus
+            returnKeyType="done"
+            onSubmitEditing={handleSubmit}
+            autoCapitalize="words"
+            autoCorrect={false}
+          />
+          <Pressable onPress={handleCancel} style={styles.searchCancel}>
+            <Text style={styles.searchCancelText}>Cancel</Text>
           </Pressable>
         </View>
+
+        {showResults && (
+          <View style={styles.resultsList}>
+            {filteredShows.map((show) => (
+              <Pressable
+                key={show._id}
+                style={styles.resultRow}
+                onPress={() => handleSelectShow(show._id)}
+              >
+                <Text style={styles.resultName} numberOfLines={1}>
+                  {show.name}
+                </Text>
+                <Text style={styles.resultType}>
+                  {TYPE_LABELS[show.type]}
+                </Text>
+              </Pressable>
+            ))}
+
+            {filteredShows.length === 0 && (
+              <View style={styles.noResults}>
+                <Text style={styles.noResultsText}>No matching shows</Text>
+              </View>
+            )}
+
+            {showCreateOption && (
+              <Pressable
+                style={styles.createCustomRow}
+                onPress={handleCreateCustomShow}
+              >
+                <Text style={styles.createCustomText}>
+                  Add "{query.trim()}" as custom show
+                </Text>
+              </Pressable>
+            )}
+          </View>
+        )}
       </View>
     </View>
   );
@@ -321,41 +414,71 @@ const styles = StyleSheet.create({
     color: "#007AFF",
     fontWeight: "500",
   },
-  addInputRow: {
+  searchContainer: {
     borderRadius: 10,
     borderWidth: 1,
     borderColor: "#007AFF",
     overflow: "hidden",
   },
-  addInput: {
+  searchInputRow: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  searchInput: {
+    flex: 1,
     padding: 14,
     fontSize: 15,
   },
-  addActions: {
-    flexDirection: "row",
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: "#ddd",
+  searchCancel: {
+    paddingHorizontal: 14,
+    paddingVertical: 10,
   },
-  cancelButton: {
-    flex: 1,
-    padding: 10,
-    alignItems: "center",
-    borderRightWidth: StyleSheet.hairlineWidth,
-    borderRightColor: "#ddd",
-  },
-  cancelText: {
+  searchCancelText: {
     fontSize: 14,
     color: "#999",
   },
-  confirmButton: {
-    flex: 1,
-    padding: 10,
-    alignItems: "center",
+  resultsList: {
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: "#ddd",
   },
-  confirmText: {
+  resultRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 14,
+    paddingVertical: 11,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: "#eee",
+  },
+  resultName: {
+    flex: 1,
+    fontSize: 15,
+    fontWeight: "500",
+    color: "#333",
+  },
+  resultType: {
+    fontSize: 12,
+    color: "#888",
+    marginLeft: 8,
+    fontWeight: "500",
+  },
+  noResults: {
+    paddingHorizontal: 14,
+    paddingVertical: 11,
+  },
+  noResultsText: {
+    fontSize: 14,
+    color: "#999",
+    fontStyle: "italic",
+  },
+  createCustomRow: {
+    paddingHorizontal: 14,
+    paddingVertical: 11,
+    backgroundColor: "#f8f8ff",
+  },
+  createCustomText: {
     fontSize: 14,
     color: "#007AFF",
-    fontWeight: "600",
+    fontWeight: "500",
   },
   cloudPlaceholder: {
     flex: 1,
