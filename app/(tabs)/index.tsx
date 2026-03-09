@@ -232,6 +232,7 @@ export default function MyShowsScreen() {
 
   const rankedShows = useQuery(api.rankings.getRankedShows);
   const reorder = useMutation(api.rankings.reorder);
+  const removeShow = useMutation(api.rankings.removeShow);
 
   const handleDragEnd = useCallback(
     async ({ data }: { data: RankedShow[] }) => {
@@ -261,13 +262,17 @@ export default function MyShowsScreen() {
                 prev === item._id ? null : item._id
               )
             }
+            onRemove={() => {
+              setExpandedShowId(null);
+              removeShow({ showId: item._id });
+            }}
             drag={drag}
             isActive={isActive}
           />
         </ScaleDecorator>
       );
     },
-    [expandedShowId]
+    [expandedShowId, removeShow]
   );
 
   const renderFooter = useCallback(() => <AddShowInput />, []);

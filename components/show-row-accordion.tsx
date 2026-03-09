@@ -1,6 +1,7 @@
 import { useMutation, useQuery } from "convex/react";
-import { memo, useRef, useState } from "react";
+import { memo, useCallback, useRef, useState } from "react";
 import {
+  Alert,
   Keyboard,
   Pressable,
   StyleSheet,
@@ -8,6 +9,7 @@ import {
   TextInput,
   View,
 } from "react-native";
+import { Swipeable } from "react-native-gesture-handler";
 
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
@@ -22,6 +24,7 @@ type RankedShow = {
   subtype?: string;
   images: string[];
   tier?: "liked" | "neutral" | "disliked";
+  visitCount: number;
 };
 
 function formatVisitDate(iso: string): string {
@@ -171,11 +174,20 @@ export function VisitsList({ showId }: { showId: Id<"shows"> }) {
   );
 }
 
+function RemoveAction({ onPress }: { onPress: () => void }) {
+  return (
+    <Pressable style={accordionStyles.removeAction} onPress={onPress}>
+      <Text style={accordionStyles.removeActionText}>Remove</Text>
+    </Pressable>
+  );
+}
+
 export const ShowRowAccordion = memo(function ShowRowAccordion({
   item,
   index,
   isExpanded,
   onToggle,
+  onRemove,
   drag,
   isActive,
 }: {
@@ -183,30 +195,63 @@ export const ShowRowAccordion = memo(function ShowRowAccordion({
   index: number;
   isExpanded: boolean;
   onToggle: () => void;
+  onRemove: () => void;
   drag: () => void;
   isActive: boolean;
 }) {
+  const swipeableRef = useRef<Swipeable>(null);
+
+  const handleRemovePress = useCallback(() => {
+    swipeableRef.current?.close();
+
+    if (item.visitCount > 0) {
+      const noun = item.visitCount === 1 ? "visit" : "visits";
+      Alert.alert(
+        `Remove "${item.name}"?`,
+        `This show has ${item.visitCount} ${noun} that will also be deleted.`,
+        [
+          { text: "Cancel", style: "cancel" },
+          { text: "Remove", style: "destructive", onPress: onRemove },
+        ]
+      );
+    } else {
+      onRemove();
+    }
+  }, [item.name, item.visitCount, onRemove]);
+
+  const renderRightActions = useCallback(
+    () => <RemoveAction onPress={handleRemovePress} />,
+    [handleRemovePress]
+  );
+
   return (
     <View>
-      <Pressable
-        onPress={onToggle}
-        onLongPress={drag}
-        disabled={isActive}
-        style={[
-          accordionStyles.showRow,
-          isActive && accordionStyles.showRowActive,
-          isExpanded && accordionStyles.showRowExpanded,
-        ]}
+      <Swipeable
+        ref={swipeableRef}
+        renderRightActions={renderRightActions}
+        enabled={!isActive}
+        overshootRight={false}
       >
-        <Text style={accordionStyles.rank}>#{index + 1}</Text>
-        <Text style={accordionStyles.showName} numberOfLines={1}>
-          {item.name}
-        </Text>
-        <Text style={accordionStyles.chevron}>
-          {isExpanded ? "▾" : "▸"}
-        </Text>
-        <Text style={accordionStyles.dragHandle}>☰</Text>
-      </Pressable>
+        <Pressable
+          onPress={onToggle}
+          onLongPress={drag}
+          disabled={isActive}
+          style={[
+            accordionStyles.showRow,
+            isActive && accordionStyles.showRowActive,
+            isExpanded && accordionStyles.showRowExpanded,
+          ]}
+        >
+          <Text style={accordionStyles.rank}>#{index + 1}</Text>
+          <Text style={accordionStyles.showName} numberOfLines={1}>
+            {item.name}
+          </Text>
+          <Text style={accordionStyles.chevron}>
+            {isExpanded ? "▾" : "▸"}
+          </Text>
+          <Text style={accordionStyles.dragHandle}>☰</Text>
+        </Pressable>
+      </Swipeable>
 
       {isExpanded && <VisitsList showId={item._id} />}
     </View>
@@ -234,6 +279,19 @@ const accordionStyles = StyleSheet.create({
   showRowExpanded: {
     borderBottomLeftRadius: 0,
     borderBottomRightRadius: 0,
+  },
+  removeAction: {
+    backgroundColor: "#FF3B30",
+    justifyContent: "center",
+    alignItems: "center",
+    width: 88,
+    borderRadius: 10,
+    marginLeft: 6,
+  },
+  removeActionText: {
+    color: "#fff",
+    fontSize: 14,
+    fontWeight: "600",
   },
   rank: {
     fontSize: 14,

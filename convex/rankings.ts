@@ -30,16 +30,25 @@ export const getRankedShows = query({
       rankings.showIds.map(async (showId) => {
         const show = await ctx.db.get(showId);
         if (!show) return null;
-        const userShow = await ctx.db
-          .query("userShows")
-          .withIndex("by_user_show", (q) =>
-            q.eq("userId", userId).eq("showId", showId)
-          )
-          .first();
+        const [userShow, visits] = await Promise.all([
+          ctx.db
+            .query("userShows")
+            .withIndex("by_user_show", (q) =>
+              q.eq("userId", userId).eq("showId", showId)
+            )
+            .first(),
+          ctx.db
+            .query("visits")
+            .withIndex("by_user_show", (q) =>
+              q.eq("userId", userId).eq("showId", showId)
+            )
+            .collect(),
+        ]);
         return {
           ...show,
           images: await resolveImageUrls(ctx, show.images),
           tier: userShow?.tier,
+          visitCount: visits.length,
         };
       })
     );
@@ -117,6 +126,15 @@ export const removeShow = mutation({
       .first();
 
     if (userShow) await ctx.db.delete(userShow._id);
+
+    const visits = await ctx.db
+      .query("visits")
+      .withIndex("by_user_show", (q) =>
+        q.eq("userId", userId).eq("showId", args.showId)
+      )
+      .collect();
+
+    await Promise.all(visits.map((v) => ctx.db.delete(v._id)));
   },
 });
 
