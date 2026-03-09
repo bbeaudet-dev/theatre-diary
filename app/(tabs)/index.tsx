@@ -1,5 +1,5 @@
 import { useMutation, useQuery } from "convex/react";
-import { useRef, useState, useCallback, useMemo, memo } from "react";
+import { useEffect, useRef, useState, useCallback, useMemo, memo } from "react";
 import {
   ActivityIndicator,
   Keyboard,
@@ -238,10 +238,31 @@ export default function MyShowsScreen() {
   const reorder = useMutation(api.rankings.reorder);
   const removeShow = useMutation(api.rankings.removeShow);
 
+  const [optimisticOrder, setOptimisticOrder] = useState<RankedShow[] | null>(
+    null
+  );
+
+  useEffect(() => {
+    setOptimisticOrder(null);
+  }, [rankedShows]);
+
+  const displayShows = (optimisticOrder ??
+    rankedShows) as RankedShow[] | undefined;
+
   const handleDragEnd = useCallback(
-    async ({ from, to }: { data: RankedShow[]; from: number; to: number }) => {
+    async ({
+      data,
+      from,
+      to,
+    }: {
+      data: RankedShow[];
+      from: number;
+      to: number;
+    }) => {
       if (from === to || !rankedShows) return;
-      await reorder({ showId: rankedShows[from]._id, newPosition: to });
+      const showId = rankedShows[from]._id;
+      setOptimisticOrder(data);
+      await reorder({ showId, newPosition: to });
     },
     [rankedShows, reorder]
   );
@@ -317,11 +338,11 @@ export default function MyShowsScreen() {
 
       {viewMode === "diary" ? (
         <DiaryView />
-      ) : rankedShows === undefined ? (
+      ) : displayShows === undefined ? (
         <Text style={styles.loading}>Loading...</Text>
       ) : viewMode === "list" ? (
         <DraggableFlatList
-          data={rankedShows as RankedShow[]}
+          data={displayShows}
           onDragEnd={handleDragEnd}
           keyExtractor={(item) => item._id}
           renderItem={renderItem}
@@ -336,14 +357,14 @@ export default function MyShowsScreen() {
       ) : (
         <>
           <TheatreCloud
-            shows={rankedShows as RankedShow[]}
+            shows={displayShows}
             onShowPress={(showId) => setSelectedShowId(showId)}
           />
           {selectedShowId && (() => {
-            const idx = (rankedShows as RankedShow[]).findIndex(
+            const idx = displayShows.findIndex(
               (s) => s._id === selectedShowId
             );
-            const show = idx >= 0 ? (rankedShows as RankedShow[])[idx] : null;
+            const show = idx >= 0 ? displayShows[idx] : null;
             return (
               <ShowDetailModal
                 showId={selectedShowId}

@@ -53,7 +53,9 @@ export const getRankedShows = query({
       })
     );
 
-    return shows.filter(Boolean);
+    return shows.filter(
+      (s): s is NonNullable<typeof s> => s !== null
+    );
   },
 });
 
