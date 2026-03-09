@@ -17,20 +17,14 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
+import {
+  ShowRowAccordion,
+  type RankedShow,
+} from "@/components/show-row-accordion";
 
 type ViewMode = "list" | "cloud";
 
 type ShowType = "musical" | "play" | "opera" | "dance" | "other";
-
-type RankedShow = {
-  _id: Id<"shows">;
-  _creationTime: number;
-  name: string;
-  type: ShowType;
-  subtype?: string;
-  images: string[];
-  tier?: "liked" | "neutral" | "disliked";
-};
 
 const MAX_RESULTS = 10;
 
@@ -226,6 +220,9 @@ const AddShowInput = memo(function AddShowInput() {
 
 export default function MyShowsScreen() {
   const [viewMode, setViewMode] = useState<ViewMode>("list");
+  const [expandedShowId, setExpandedShowId] = useState<Id<"shows"> | null>(
+    null
+  );
 
   const rankedShows = useQuery(api.rankings.getRankedShows);
   const reorder = useMutation(api.rankings.reorder);
@@ -249,21 +246,22 @@ export default function MyShowsScreen() {
       const index = getIndex();
       return (
         <ScaleDecorator>
-          <Pressable
-            onLongPress={drag}
-            disabled={isActive}
-            style={[styles.showRow, isActive && styles.showRowActive]}
-          >
-            <Text style={styles.rank}>#{(index ?? 0) + 1}</Text>
-            <Text style={styles.showName} numberOfLines={1}>
-              {item.name}
-            </Text>
-            <Text style={styles.dragHandle}>☰</Text>
-          </Pressable>
+          <ShowRowAccordion
+            item={item}
+            index={index ?? 0}
+            isExpanded={expandedShowId === item._id}
+            onToggle={() =>
+              setExpandedShowId((prev) =>
+                prev === item._id ? null : item._id
+              )
+            }
+            drag={drag}
+            isActive={isActive}
+          />
         </ScaleDecorator>
       );
     },
-    []
+    [expandedShowId]
   );
 
   const renderFooter = useCallback(() => <AddShowInput />, []);
@@ -396,37 +394,6 @@ const styles = StyleSheet.create({
     paddingBottom: 16,
     gap: 6,
   },
-  showRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    padding: 12,
-    backgroundColor: "#f5f5f5",
-    borderRadius: 10,
-  },
-  showRowActive: {
-    backgroundColor: "#e8e8e8",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    elevation: 5,
-  },
-  rank: {
-    fontSize: 14,
-    fontWeight: "bold",
-    width: 36,
-    color: "#333",
-  },
-  showName: {
-    flex: 1,
-    fontSize: 15,
-    fontWeight: "500",
-  },
-  dragHandle: {
-    fontSize: 18,
-    color: "#ccc",
-    paddingLeft: 8,
-  },
   pendingRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -455,6 +422,7 @@ const styles = StyleSheet.create({
     borderColor: "#ddd",
     borderStyle: "dashed",
     alignItems: "center",
+    marginBottom: 24,
   },
   addButtonText: {
     fontSize: 15,

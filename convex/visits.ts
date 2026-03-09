@@ -1,0 +1,42 @@
+import { v } from "convex/values";
+import { mutation, query } from "./_generated/server";
+import { requireConvexUserId } from "./auth";
+
+export const listByShow = query({
+  args: { showId: v.id("shows") },
+  handler: async (ctx, args) => {
+    const userId = await requireConvexUserId(ctx);
+    const visits = await ctx.db
+      .query("visits")
+      .withIndex("by_user_show", (q) =>
+        q.eq("userId", userId).eq("showId", args.showId)
+      )
+      .collect();
+
+    return visits.sort((a, b) => b.date.localeCompare(a.date));
+  },
+});
+
+export const create = mutation({
+  args: {
+    showId: v.id("shows"),
+    date: v.string(),
+    theatre: v.optional(v.string()),
+    notes: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const userId = await requireConvexUserId(ctx);
+    return await ctx.db.insert("visits", { userId, ...args });
+  },
+});
+
+export const remove = mutation({
+  args: { visitId: v.id("visits") },
+  handler: async (ctx, args) => {
+    const userId = await requireConvexUserId(ctx);
+    const visit = await ctx.db.get(args.visitId);
+    if (!visit) throw new Error("Visit not found");
+    if (visit.userId !== userId) throw new Error("Not authorized");
+    await ctx.db.delete(args.visitId);
+  },
+});
