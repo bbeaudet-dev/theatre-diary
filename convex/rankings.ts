@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { requireConvexUserId } from "./auth";
+import { resolveImageUrls } from "./helpers";
 
 export const get = query({
   args: {},
@@ -28,13 +29,18 @@ export const getRankedShows = query({
     const shows = await Promise.all(
       rankings.showIds.map(async (showId) => {
         const show = await ctx.db.get(showId);
+        if (!show) return null;
         const userShow = await ctx.db
           .query("userShows")
           .withIndex("by_user_show", (q) =>
             q.eq("userId", userId).eq("showId", showId)
           )
           .first();
-        return show ? { ...show, tier: userShow?.tier } : null;
+        return {
+          ...show,
+          images: await resolveImageUrls(ctx, show.images),
+          tier: userShow?.tier,
+        };
       })
     );
 
