@@ -1,6 +1,7 @@
 import { useMutation, useQuery } from "convex/react";
-import { useState, useCallback, useMemo, memo } from "react";
+import { useRef, useState, useCallback, useMemo, memo } from "react";
 import {
+  ActivityIndicator,
   Keyboard,
   Pressable,
   StyleSheet,
@@ -44,6 +45,8 @@ const TYPE_LABELS: Record<ShowType, string> = {
 const AddShowInput = memo(function AddShowInput() {
   const [isAdding, setIsAdding] = useState(false);
   const [query, setQuery] = useState("");
+  const [pendingNames, setPendingNames] = useState<string[]>([]);
+  const inputRef = useRef<TextInput>(null);
 
   const allShows = useQuery(api.shows.list);
   const rankings = useQuery(api.rankings.get);
@@ -82,35 +85,48 @@ const AddShowInput = memo(function AddShowInput() {
     );
   }, [query, filteredShows]);
 
-  const handleSelectShow = async (showId: Id<"shows">) => {
-    await addToRankings({ showId, tier: "liked", position: Infinity });
+  const removePending = useCallback((name: string) => {
+    setPendingNames((prev) => {
+      const idx = prev.indexOf(name);
+      return idx >= 0 ? [...prev.slice(0, idx), ...prev.slice(idx + 1)] : prev;
+    });
+  }, []);
+
+  const handleSelectShow = (showId: Id<"shows">) => {
+    const show = allShows?.find((s) => s._id === showId);
+    const name = show?.name ?? "Adding...";
+    setPendingNames((prev) => [...prev, name]);
     setQuery("");
-    setIsAdding(false);
-    Keyboard.dismiss();
+    inputRef.current?.focus();
+
+    addToRankings({ showId, tier: "liked", position: Infinity })
+      .finally(() => removePending(name));
   };
 
-  const handleCreateCustomShow = async () => {
+  const handleCreateCustomShow = () => {
     const trimmed = query.trim();
     if (!trimmed) return;
+    setPendingNames((prev) => [...prev, trimmed]);
+    setQuery("");
+    inputRef.current?.focus();
 
-    const showId = await createShow({
+    createShow({
       name: trimmed,
       type: "other",
       images: [],
       isUserCreated: true,
-    });
-
-    await addToRankings({ showId, tier: "liked", position: Infinity });
-    setQuery("");
-    setIsAdding(false);
-    Keyboard.dismiss();
+    })
+      .then((showId) =>
+        addToRankings({ showId, tier: "liked", position: Infinity })
+      )
+      .finally(() => removePending(trimmed));
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = () => {
     if (filteredShows.length > 0) {
-      await handleSelectShow(filteredShows[0]._id);
+      handleSelectShow(filteredShows[0]._id);
     } else if (query.trim()) {
-      await handleCreateCustomShow();
+      handleCreateCustomShow();
     } else {
       setIsAdding(false);
     }
@@ -122,9 +138,19 @@ const AddShowInput = memo(function AddShowInput() {
     Keyboard.dismiss();
   };
 
+  const pendingRows = pendingNames.map((name, i) => (
+    <View key={`pending-${i}`} style={styles.pendingRow}>
+      <ActivityIndicator size="small" color="#999" style={styles.pendingSpinner} />
+      <Text style={styles.pendingName} numberOfLines={1}>
+        {name}
+      </Text>
+    </View>
+  ));
+
   if (!isAdding) {
     return (
       <View style={styles.footer}>
+        {pendingRows}
         <Pressable style={styles.addButton} onPress={() => setIsAdding(true)}>
           <Text style={styles.addButtonText}>+ Add Show</Text>
         </Pressable>
@@ -137,15 +163,18 @@ const AddShowInput = memo(function AddShowInput() {
 
   return (
     <View style={styles.footer}>
+      {pendingRows}
       <View style={styles.searchContainer}>
         <View style={styles.searchInputRow}>
           <TextInput
+            ref={inputRef}
             style={styles.searchInput}
             value={query}
             onChangeText={setQuery}
             placeholder="Search shows..."
             autoFocus
-            returnKeyType="done"
+            returnKeyType="search"
+            blurOnSubmit={false}
             onSubmitEditing={handleSubmit}
             autoCapitalize="words"
             autoCorrect={false}
@@ -397,6 +426,24 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: "#ccc",
     paddingLeft: 8,
+  },
+  pendingRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 12,
+    backgroundColor: "#f5f5f5",
+    borderRadius: 10,
+    opacity: 0.6,
+    marginBottom: 6,
+  },
+  pendingSpinner: {
+    width: 36,
+  },
+  pendingName: {
+    flex: 1,
+    fontSize: 15,
+    fontWeight: "500",
+    color: "#999",
   },
   footer: {
     marginTop: 4,
