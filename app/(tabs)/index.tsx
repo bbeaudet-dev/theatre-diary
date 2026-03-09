@@ -23,6 +23,7 @@ import {
   type RankedShow,
 } from "@/components/show-row-accordion";
 import { TheatreCloud } from "@/components/theatre-cloud";
+import { ShowDetailModal } from "@/components/show-detail-modal";
 
 type ViewMode = "list" | "cloud" | "diary";
 
@@ -225,6 +226,9 @@ export default function MyShowsScreen() {
   const [expandedShowId, setExpandedShowId] = useState<Id<"shows"> | null>(
     null
   );
+  const [selectedShowId, setSelectedShowId] = useState<Id<"shows"> | null>(
+    null
+  );
 
   const rankedShows = useQuery(api.rankings.getRankedShows);
   const reorder = useMutation(api.rankings.reorder);
@@ -314,13 +318,26 @@ export default function MyShowsScreen() {
           contentContainerStyle={styles.listContent}
         />
       ) : (
-        <TheatreCloud
-          shows={rankedShows as RankedShow[]}
-          onShowPress={(showId) => {
-            setExpandedShowId(showId);
-            setViewMode("list");
-          }}
-        />
+        <>
+          <TheatreCloud
+            shows={rankedShows as RankedShow[]}
+            onShowPress={(showId) => setSelectedShowId(showId)}
+          />
+          {selectedShowId && (() => {
+            const idx = (rankedShows as RankedShow[]).findIndex(
+              (s) => s._id === selectedShowId
+            );
+            const show = idx >= 0 ? (rankedShows as RankedShow[])[idx] : null;
+            return (
+              <ShowDetailModal
+                showId={selectedShowId}
+                showName={show?.name ?? ""}
+                rank={idx + 1}
+                onClose={() => setSelectedShowId(null)}
+              />
+            );
+          })()}
+        </>
       )}
     </SafeAreaView>
   );

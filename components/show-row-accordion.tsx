@@ -120,7 +120,7 @@ function AddVisitForm({
   );
 }
 
-function VisitsList({ showId }: { showId: Id<"shows"> }) {
+export function VisitsList({ showId }: { showId: Id<"shows"> }) {
   const [isAdding, setIsAdding] = useState(false);
   const visits = useQuery(api.visits.listByShow, { showId });
   const removeVisit = useMutation(api.visits.remove);

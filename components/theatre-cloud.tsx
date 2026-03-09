@@ -41,7 +41,17 @@ const LABEL_FONT_SIZE = 9;
 const LABEL_PADDING = 4;
 const LABEL_MIN_WIDTH = 38;
 
-const labelFont = matchFont({ fontSize: LABEL_FONT_SIZE, fontWeight: "500" });
+let _labelFont: ReturnType<typeof matchFont> | null = null;
+function getLabelFont() {
+  if (!_labelFont) {
+    try {
+      _labelFont = matchFont({ fontSize: LABEL_FONT_SIZE, fontWeight: "500" });
+    } catch {
+      return null;
+    }
+  }
+  return _labelFont;
+}
 
 function overlaps(
   placed: Placement[],
@@ -51,6 +61,29 @@ function overlaps(
   h: number
 ): boolean {
   for (const p of placed) {
+    if (
+      x < p.x + p.width + ITEM_GAP &&
+      x + w + ITEM_GAP > p.x &&
+      y < p.y + p.height + ITEM_GAP &&
+      y + h + ITEM_GAP > p.y
+    ) {
+      return true;
+    }
+  }
+  return false;
+}
+
+function overlapsExcluding(
+  placed: Placement[],
+  skipIdx: number,
+  x: number,
+  y: number,
+  w: number,
+  h: number
+): boolean {
+  for (let i = 0; i < placed.length; i++) {
+    if (i === skipIdx) continue;
+    const p = placed[i];
     if (
       x < p.x + p.width + ITEM_GAP &&
       x + w + ITEM_GAP > p.x &&
@@ -86,26 +119,41 @@ function computeLayout(shows: CloudShow[]): Placement[] {
       bestY = 0;
 
       for (const p of placed) {
-        const candidates = [
-          { x: p.x + p.width + ITEM_GAP, y: p.y },
-          { x: p.x + p.width + ITEM_GAP, y: p.y + p.height - h },
-          { x: p.x - w - ITEM_GAP, y: p.y },
-          { x: p.x - w - ITEM_GAP, y: p.y + p.height - h },
-          { x: p.x, y: p.y + p.height + ITEM_GAP },
-          { x: p.x + p.width - w, y: p.y + p.height + ITEM_GAP },
-          { x: p.x, y: p.y - h - ITEM_GAP },
-          { x: p.x + p.width - w, y: p.y - h - ITEM_GAP },
-        ];
+        const xEdges = [p.x + p.width + ITEM_GAP, p.x - w - ITEM_GAP];
+        const yEdges = [p.y + p.height + ITEM_GAP, p.y - h - ITEM_GAP];
 
-        for (const c of candidates) {
-          if (!overlaps(placed, c.x, c.y, w, h)) {
-            const dx = c.x + w / 2;
-            const dy = c.y + h / 2;
-            const dist = dx * dx + dy * dy;
-            if (dist < bestDist) {
-              bestDist = dist;
-              bestX = c.x;
-              bestY = c.y;
+        for (const cx of xEdges) {
+          for (const q of placed) {
+            const yAligns = [q.y, q.y + q.height - h];
+            for (const cy of yAligns) {
+              if (!overlaps(placed, cx, cy, w, h)) {
+                const dx = cx + w / 2;
+                const dy = cy + h / 2;
+                const dist = dx * dx + dy * dy;
+                if (dist < bestDist) {
+                  bestDist = dist;
+                  bestX = cx;
+                  bestY = cy;
+                }
+              }
+            }
+          }
+        }
+
+        for (const cy of yEdges) {
+          for (const q of placed) {
+            const xAligns = [q.x, q.x + q.width - w];
+            for (const cx of xAligns) {
+              if (!overlaps(placed, cx, cy, w, h)) {
+                const dx = cx + w / 2;
+                const dy = cy + h / 2;
+                const dist = dx * dx + dy * dy;
+                if (dist < bestDist) {
+                  bestDist = dist;
+                  bestX = cx;
+                  bestY = cy;
+                }
+              }
             }
           }
         }
@@ -133,6 +181,48 @@ function computeLayout(shows: CloudShow[]): Placement[] {
       showName: show.name,
       imageUrl: show.images[0],
     });
+  }
+
+  // Compaction pass: slide each item (smallest first) toward center
+  for (let i = placed.length - 1; i >= 0; i--) {
+    const p = placed[i];
+    const cx = p.x + p.width / 2;
+    const cy = p.y + p.height / 2;
+    const stepX = cx > 0 ? -1 : cx < 0 ? 1 : 0;
+    const stepY = cy > 0 ? -1 : cy < 0 ? 1 : 0;
+
+    let moved = true;
+    while (moved) {
+      moved = false;
+      if (
+        stepX !== 0 &&
+        !overlapsExcluding(
+          placed,
+          i,
+          p.x + stepX,
+          p.y,
+          p.width,
+          p.height
+        )
+      ) {
+        p.x += stepX;
+        moved = true;
+      }
+      if (
+        stepY !== 0 &&
+        !overlapsExcluding(
+          placed,
+          i,
+          p.x,
+          p.y + stepY,
+          p.width,
+          p.height
+        )
+      ) {
+        p.y += stepY;
+        moved = true;
+      }
+    }
   }
 
   return placed;
@@ -176,6 +266,46 @@ function PlaybillImage({
   );
 }
 
+function PlaybillLabel({
+  showName,
+  x,
+  y,
+  width,
+  height,
+}: {
+  showName: string;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}) {
+  const font = getLabelFont();
+  if (!font || width < LABEL_MIN_WIDTH) return null;
+
+  return (
+    <Group
+      clip={{
+        rect: {
+          x: x + LABEL_PADDING,
+          y,
+          width: width - LABEL_PADDING * 2,
+          height,
+        },
+        rx: 0,
+        ry: 0,
+      }}
+    >
+      <SkiaText
+        font={font}
+        text={showName}
+        x={x + LABEL_PADDING}
+        y={y + height / 2 + LABEL_FONT_SIZE * 0.35}
+        color="#666"
+      />
+    </Group>
+  );
+}
+
 function PlaybillItem({ placement }: { placement: Placement }) {
   const { x, y, width, height, imageUrl, showName } = placement;
   const r = Math.max(2, width * CORNER_RADIUS_RATIO);
@@ -199,28 +329,15 @@ function PlaybillItem({ placement }: { placement: Placement }) {
           height={height}
           r={r}
         />
-      ) : width >= LABEL_MIN_WIDTH ? (
-        <Group
-          clip={{
-            rect: {
-              x: x + LABEL_PADDING,
-              y,
-              width: width - LABEL_PADDING * 2,
-              height,
-            },
-            rx: 0,
-            ry: 0,
-          }}
-        >
-          <SkiaText
-            font={labelFont}
-            text={showName}
-            x={x + LABEL_PADDING}
-            y={y + height / 2 + LABEL_FONT_SIZE * 0.35}
-            color="#666"
-          />
-        </Group>
-      ) : null}
+      ) : (
+        <PlaybillLabel
+          showName={showName}
+          x={x}
+          y={y}
+          width={width}
+          height={height}
+        />
+      )}
     </Group>
   );
 }
