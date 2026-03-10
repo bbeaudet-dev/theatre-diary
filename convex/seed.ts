@@ -486,6 +486,91 @@ export const insertProduction = internalMutation({
   },
 });
 
+// Broadway shows missed in the initial seed (also from Playbill.com, Mar 9 2026).
+const BROADWAY_ADDITIONS: ProductionEntry[] = [
+  {
+    showName: "Giant",
+    showType: "play",
+    theatre: "Music Box Theatre",
+    city: "New York",
+    district: "broadway",
+    previewDate: "2026-03-11",
+    openingDate: "2026-03-23",
+    productionType: "transfer",
+  },
+  {
+    showName: "Cats: The Jellicle Ball",
+    showType: "musical",
+    theatre: "Broadhurst Theatre",
+    city: "New York",
+    district: "broadway",
+    previewDate: "2026-03-18",
+    openingDate: "2026-04-07",
+    productionType: "revival",
+  },
+  {
+    showName: "Becky Shaw",
+    showType: "play",
+    theatre: "Helen Hayes Theater",
+    city: "New York",
+    district: "broadway",
+    previewDate: "2026-03-18",
+    openingDate: "2026-04-08",
+    closingDate: "2026-06-14",
+    productionType: "revival",
+  },
+];
+
+// Off-Broadway productions. Dates from Playbill.com on Mar 9, 2026.
+const OFF_BROADWAY_PRODUCTIONS: ProductionEntry[] = [
+  // Long-running
+  {
+    showName: "Little Shop of Horrors",
+    showType: "musical",
+    theatre: "Westside Theatre (Upstairs)",
+    city: "New York",
+    district: "off_broadway",
+    previewDate: "2019-09-17",
+    openingDate: "2019-10-17",
+    productionType: "revival",
+  },
+  // Current
+  {
+    showName: "11 to Midnight",
+    showType: "dance",
+    theatre: "Orpheum Theatre",
+    city: "New York",
+    district: "off_broadway",
+    previewDate: "2026-01-28",
+    openingDate: "2026-02-11",
+    closingDate: "2026-04-19",
+    productionType: "original",
+  },
+  {
+    showName: "Spare Parts",
+    showType: "play",
+    theatre: "Theatre Three @ Theatre Row",
+    city: "New York",
+    district: "off_broadway",
+    previewDate: "2026-02-26",
+    openingDate: "2026-03-08",
+    closingDate: "2026-04-10",
+    productionType: "original",
+  },
+  // Just opened
+  {
+    showName: "No Singing in the Navy",
+    showType: "musical",
+    theatre: "Playwrights Horizons/Peter Jay Sharp Theater",
+    city: "New York",
+    district: "off_broadway",
+    previewDate: "2026-03-18",
+    openingDate: "2026-03-29",
+    closingDate: "2026-04-19",
+    productionType: "original",
+  },
+];
+
 // Seeds the productions table with all current & upcoming Broadway shows.
 // Dates sourced from Playbill.com on Mar 9, 2026.
 // Safe to run multiple times — skips already-existing productions.
@@ -497,6 +582,47 @@ export const seedBroadwayProductions = internalAction({
     const errors: string[] = [];
 
     for (const entry of BROADWAY_PRODUCTIONS) {
+      try {
+        const showId = await ctx.runMutation(internal.seed.findOrCreateShow, {
+          name: entry.showName,
+          type: entry.showType,
+        });
+
+        const result = await ctx.runMutation(internal.seed.insertProduction, {
+          showId,
+          theatre: entry.theatre,
+          city: entry.city,
+          district: entry.district,
+          previewDate: entry.previewDate,
+          openingDate: entry.openingDate,
+          closingDate: entry.closingDate,
+          productionType: entry.productionType,
+        });
+
+        if (result.skipped) skipped++;
+        else created++;
+      } catch (e) {
+        errors.push(
+          `${entry.showName}: ${e instanceof Error ? e.message : String(e)}`
+        );
+      }
+    }
+
+    return { created, skipped, errors };
+  },
+});
+
+// Seeds missed Broadway shows + Off-Broadway productions.
+// Dates sourced from Playbill.com on Mar 9, 2026.
+// Safe to run multiple times — skips already-existing productions.
+// Run: npx convex run seed:seedAdditionalProductions
+export const seedAdditionalProductions = internalAction({
+  handler: async (ctx) => {
+    let created = 0;
+    let skipped = 0;
+    const errors: string[] = [];
+
+    for (const entry of [...BROADWAY_ADDITIONS, ...OFF_BROADWAY_PRODUCTIONS]) {
       try {
         const showId = await ctx.runMutation(internal.seed.findOrCreateShow, {
           name: entry.showName,
