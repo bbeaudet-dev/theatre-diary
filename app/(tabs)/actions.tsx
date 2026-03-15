@@ -1,13 +1,13 @@
 import { StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-export default function AddScreen() {
+export default function ActionsScreen() {
   return (
     <SafeAreaView style={styles.container}>
-      <Text style={styles.title}>Add</Text>
+      <Text style={styles.title}>Actions</Text>
       <View style={styles.placeholder}>
         <Text style={styles.placeholderText}>
-          Future home of diary entries, trip planning, and more.
+          Future home of quick actions.
         </Text>
       </View>
     </SafeAreaView>
