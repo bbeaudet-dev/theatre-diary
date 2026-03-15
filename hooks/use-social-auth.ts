@@ -8,11 +8,12 @@ import { Alert } from "react-native";
 import { authClient } from "@/lib/auth-client";
 
 export function useSocialAuth() {
-  const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
+  const [appleLoading, setAppleLoading] = useState(false);
 
   const signInWithGoogle = async () => {
     try {
-      setLoading(true);
+      setGoogleLoading(true);
       await GoogleSignin.hasPlayServices();
       await GoogleSignin.signOut();
 
@@ -49,13 +50,13 @@ export function useSocialAuth() {
       }
       return null;
     } finally {
-      setLoading(false);
+      setGoogleLoading(false);
     }
   };
 
   const signInWithApple = async () => {
     try {
-      setLoading(true);
+      setAppleLoading(true);
       const credential = await AppleAuthentication.signInAsync({
         requestedScopes: [
           AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
@@ -90,9 +91,9 @@ export function useSocialAuth() {
       }
       return null;
     } finally {
-      setLoading(false);
+      setAppleLoading(false);
     }
   };
 
-  return { loading, signInWithGoogle, signInWithApple };
+  return { googleLoading, appleLoading, signInWithGoogle, signInWithApple };
 }
