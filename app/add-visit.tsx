@@ -30,6 +30,7 @@ const TYPE_LABELS: Record<ShowType, string> = {
 };
 
 const MAX_RESULTS = 10;
+const DEFAULT_SUGGESTION_RESULTS = 10;
 const TIER_ORDER: RankingTier[] = ["loved", "liked", "okay", "disliked"];
 const TIER_LABELS: Record<RankingTier, string> = {
   loved: "Loved it",
@@ -73,6 +74,13 @@ type RankedShowForRanking = {
   name: string;
   images: string[];
   tier?: string;
+  isUnranked?: boolean;
+};
+
+type UserShowStatus = {
+  _id: Id<"shows">;
+  tier?: string;
+  visitCount?: number;
   isUnranked?: boolean;
 };
 
@@ -137,6 +145,31 @@ export default function AddVisitScreen() {
       })
       .slice(0, MAX_RESULTS);
   }, [allShows, query]);
+
+  const suggestedShows = useMemo(() => {
+    if (!allShows) return [];
+    const rankedIds = new Set<Id<"shows">>();
+    const rankedFirst: typeof allShows = [];
+    const unseenPool: typeof allShows = [];
+
+    for (const entry of ((rankedShows ?? []) as UserShowStatus[])) {
+      if (entry.isUnranked || entry.tier === "unranked") continue;
+      rankedIds.add(entry._id);
+    }
+
+    for (const show of allShows) {
+      if (rankedIds.has(show._id)) {
+        rankedFirst.push(show);
+      } else {
+        unseenPool.push(show);
+      }
+    }
+
+    unseenPool.sort((a, b) => a.name.localeCompare(b.name));
+    return [...rankedFirst, ...unseenPool].slice(0, DEFAULT_SUGGESTION_RESULTS);
+  }, [allShows, rankedShows]);
+
+  const searchResults = query.trim().length > 0 ? filteredShows : suggestedShows;
 
   const hasExactMatch = useMemo(() => {
     const lower = query.trim().toLowerCase();
@@ -397,7 +430,7 @@ export default function AddVisitScreen() {
                   autoCapitalize="words"
                   autoCorrect={false}
                 />
-                {query.trim().length > 0 && (
+                {allShows !== undefined && (
                   <View style={styles.resultsCard}>
                     {!hasExactMatch && (
                       <Pressable
@@ -409,12 +442,17 @@ export default function AddVisitScreen() {
                         </Text>
                       </Pressable>
                     )}
-                    {filteredShows.length === 0 && hasExactMatch && (
+                    {searchResults.length === 0 && query.trim().length > 0 && hasExactMatch && (
                       <View style={styles.noResultsRow}>
                         <Text style={styles.noResultsText}>No matching shows</Text>
                       </View>
                     )}
-                    {filteredShows.map((show) => (
+                    {query.trim().length === 0 && (
+                      <View style={styles.suggestionHeaderRow}>
+                        <Text style={styles.suggestionHeaderText}>Suggestions</Text>
+                      </View>
+                    )}
+                    {searchResults.map((show) => (
                       <Pressable
                         key={show._id}
                         style={styles.resultRow}
@@ -786,6 +824,20 @@ const styles = StyleSheet.create({
   noResultsText: {
     color: "#999",
     fontSize: 14,
+  },
+  suggestionHeaderRow: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: "#ededed",
+    backgroundColor: "#fafafa",
+  },
+  suggestionHeaderText: {
+    fontSize: 12,
+    color: "#888",
+    fontWeight: "600",
+    textTransform: "uppercase",
+    letterSpacing: 0.4,
   },
   resultRow: {
     flexDirection: "row",
