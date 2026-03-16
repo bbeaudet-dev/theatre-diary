@@ -73,6 +73,7 @@ type RankedShowForRanking = {
   name: string;
   images: string[];
   tier?: string;
+  isUnranked?: boolean;
 };
 
 function getTodayIsoDate() {
@@ -151,7 +152,9 @@ export default function AddVisitScreen() {
     hasSelectedShow && !(showContext?.hasRanking && keepCurrentRanking);
   const isRankingsLoading = rankedShows === undefined;
   const rankedShowsForRanking = useMemo<RankedShowForRanking[]>(() => {
-    const base = (rankedShows ?? []) as RankedShowForRanking[];
+    const base = ((rankedShows ?? []) as RankedShowForRanking[]).filter(
+      (show) => !show.isUnranked && show.tier !== "unranked"
+    );
     if (!selectedShowId) return base;
     return base.filter((show) => show._id !== selectedShowId);
   }, [rankedShows, selectedShowId]);
