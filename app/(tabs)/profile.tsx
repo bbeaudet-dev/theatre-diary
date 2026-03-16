@@ -1,7 +1,7 @@
 import { useMutation, useQuery } from "convex/react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import {
   ActivityIndicator,
   Pressable,
@@ -36,6 +36,7 @@ type CustomListRow = {
 export default function ProfileScreen() {
   const tabBarHeight = useBottomTabBarHeight();
   const router = useRouter();
+  const params = useLocalSearchParams<{ createList?: string }>();
   const { data: session } = useSession();
   const profileLists = useQuery(api.lists.getProfileLists);
   const createCustomList = useMutation(api.lists.createCustomList);
@@ -49,10 +50,21 @@ export default function ProfileScreen() {
     () => new Set()
   );
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const inputRef = useRef<TextInput>(null);
 
   useEffect(() => {
     initializeSystemLists().catch(() => undefined);
   }, [initializeSystemLists]);
+
+  useEffect(() => {
+    if (params.createList !== "1") return;
+    setIsShowingCreateInput(true);
+    const timeout = setTimeout(() => {
+      inputRef.current?.focus();
+      router.setParams({ createList: undefined });
+    }, 40);
+    return () => clearTimeout(timeout);
+  }, [params.createList, router]);
 
   const handleSignOut = async () => {
     await authClient.signOut();
@@ -67,7 +79,18 @@ export default function ProfileScreen() {
     [profileLists]
   );
   const visibleLists = useMemo(() => {
-    const seenRow = profileLists ? [{ _id: "seen" as const, name: "Seen", isPublic: false, showCount: profileLists.seen.showCount, isSeen: true }] : [];
+    const seenRow = profileLists
+      ? [
+          {
+            _id: "seen" as const,
+            name: "Seen",
+            isPublic: false,
+            showCount: profileLists.seen.showCount,
+            isSeen: true,
+            systemKey: "seen",
+          },
+        ]
+      : [];
 
     const dynamicSystem = systemLists.map((list) => ({
       _id: list._id,
@@ -75,6 +98,7 @@ export default function ProfileScreen() {
       isPublic: list.isPublic,
       showCount: list.showCount,
       isSeen: false,
+      systemKey: list.systemKey,
     }));
 
     const custom = customLists.map((list) => ({
@@ -83,6 +107,7 @@ export default function ProfileScreen() {
       isPublic: list.isPublic,
       showCount: list.showCount,
       isSeen: false,
+      systemKey: undefined,
     }));
 
     return [...seenRow, ...dynamicSystem, ...custom];
@@ -121,10 +146,20 @@ export default function ProfileScreen() {
     }
   };
 
-  const openList = (listId: string, name: string, isSeen: boolean) => {
+  const openList = (
+    listId: string,
+    name: string,
+    isSeen: boolean,
+    systemKey?: string
+  ) => {
     router.push({
       pathname: "/list/[listId]",
-      params: { listId, name, seen: isSeen ? "1" : "0" },
+      params: {
+        listId,
+        name,
+        seen: isSeen ? "1" : "0",
+        systemKey: systemKey ?? "",
+      },
     });
   };
 
@@ -155,6 +190,7 @@ export default function ProfileScreen() {
                 style={styles.inlineInput}
                 placeholder="List name"
                 autoCapitalize="words"
+                ref={inputRef}
               />
               <Pressable
                 onPress={handleCreateCustomList}
@@ -182,7 +218,9 @@ export default function ProfileScreen() {
                   <Pressable
                     key={list._id}
                     style={styles.listRow}
-                    onPress={() => openList(String(list._id), list.name, isSeen)}
+                    onPress={() =>
+                      openList(String(list._id), list.name, isSeen, list.systemKey)
+                    }
                   >
                     <View style={styles.rowTop}>
                       <View style={styles.listInfo}>

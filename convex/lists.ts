@@ -10,6 +10,7 @@ import {
 } from "./listRules";
 
 const MAX_CUSTOM_LIST_NAME_LENGTH = 80;
+const MAX_CUSTOM_LIST_DESCRIPTION_LENGTH = 280;
 
 function normalizeName(name: string) {
   return name.trim().replace(/\s+/g, " ");
@@ -92,6 +93,7 @@ export const getProfileLists = query({
       .map((list) => ({
         _id: list._id,
         name: list.name,
+        description: list.description,
         isPublic: list.isPublic,
         showCount: list.showIds.length,
       }));
@@ -171,6 +173,7 @@ export const getListById = query({
 export const createCustomList = mutation({
   args: {
     name: v.string(),
+    description: v.optional(v.string()),
     isPublic: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
@@ -181,6 +184,11 @@ export const createCustomList = mutation({
       throw new Error("List name is too long");
     }
 
+    const description = args.description?.trim();
+    if (description && description.length > MAX_CUSTOM_LIST_DESCRIPTION_LENGTH) {
+      throw new Error("Description is too long");
+    }
+
     await assertNoDuplicateListName(ctx, userId, name);
     const now = Date.now();
     return await ctx.db.insert("userLists", {
@@ -188,6 +196,7 @@ export const createCustomList = mutation({
       name,
       kind: "custom",
       systemKey: undefined,
+      description: description || undefined,
       isPublic: args.isPublic ?? false,
       showIds: [],
       createdAt: now,
@@ -215,6 +224,30 @@ export const renameCustomList = mutation({
     await assertNoDuplicateListName(ctx, userId, name, args.listId);
     await ctx.db.patch(args.listId, {
       name,
+      updatedAt: Date.now(),
+    });
+  },
+});
+
+export const updateCustomListDescription = mutation({
+  args: {
+    listId: v.id("userLists"),
+    description: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const userId = await requireConvexUserId(ctx);
+    const list = await getOwnedListOrThrow(ctx, userId, args.listId);
+    if (list.kind !== "custom") {
+      throw new Error("Only custom lists can be updated");
+    }
+
+    const description = args.description?.trim();
+    if (description && description.length > MAX_CUSTOM_LIST_DESCRIPTION_LENGTH) {
+      throw new Error("Description is too long");
+    }
+
+    await ctx.db.patch(args.listId, {
+      description: description || undefined,
       updatedAt: Date.now(),
     });
   },

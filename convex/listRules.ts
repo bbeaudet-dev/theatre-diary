@@ -113,6 +113,7 @@ export async function ensureDefaultSystemLists(
       name: SYSTEM_LIST_NAME_BY_KEY[key],
       kind: "system",
       systemKey: key,
+      description: undefined,
       isPublic: false,
       showIds: [],
       createdAt: now,

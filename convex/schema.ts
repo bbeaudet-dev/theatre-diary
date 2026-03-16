@@ -107,6 +107,7 @@ export default defineSchema({
         v.literal("uncategorized")
       )
     ),
+    description: v.optional(v.string()),
     isPublic: v.boolean(),
     showIds: v.array(v.id("shows")),
     createdAt: v.number(),
