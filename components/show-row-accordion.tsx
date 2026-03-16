@@ -197,7 +197,7 @@ export const ShowRowAccordion = memo(function ShowRowAccordion({
 }: {
   item: RankedShow;
   index: number;
-  tierHeader?: string | null;
+  tierHeader?: { label: string; color: string; textColor?: string } | null;
   isExpanded: boolean;
   isRemoving: boolean;
   onToggle: () => void;
@@ -233,7 +233,23 @@ export const ShowRowAccordion = memo(function ShowRowAccordion({
   if (isRemoving) {
     return (
       <View>
-        {tierHeader ? <Text style={accordionStyles.tierHeader}>{tierHeader}</Text> : null}
+        {tierHeader ? (
+          <View
+            style={[
+              accordionStyles.tierBadge,
+              { backgroundColor: tierHeader.color },
+            ]}
+          >
+            <Text
+              style={[
+                accordionStyles.tierBadgeText,
+                tierHeader.textColor ? { color: tierHeader.textColor } : null,
+              ]}
+            >
+              {tierHeader.label}
+            </Text>
+          </View>
+        ) : null}
         <View
           style={[accordionStyles.showRow, accordionStyles.showRowRemoving]}
         >
@@ -248,7 +264,23 @@ export const ShowRowAccordion = memo(function ShowRowAccordion({
 
   return (
     <View>
-      {tierHeader ? <Text style={accordionStyles.tierHeader}>{tierHeader}</Text> : null}
+      {tierHeader ? (
+        <View
+          style={[
+            accordionStyles.tierBadge,
+            { backgroundColor: tierHeader.color },
+          ]}
+        >
+          <Text
+            style={[
+              accordionStyles.tierBadgeText,
+              tierHeader.textColor ? { color: tierHeader.textColor } : null,
+            ]}
+          >
+            {tierHeader.label}
+          </Text>
+        </View>
+      ) : null}
       <Swipeable
         ref={swipeableRef}
         renderRightActions={renderRightActions}
@@ -328,15 +360,21 @@ const accordionStyles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "600",
   },
-  tierHeader: {
-    fontSize: 12,
-    fontWeight: "700",
-    color: "#666",
-    letterSpacing: 0.4,
-    textTransform: "uppercase",
+  tierBadge: {
+    alignSelf: "flex-start",
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
     marginTop: 8,
     marginBottom: 4,
     marginLeft: 2,
+  },
+  tierBadgeText: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: "#111",
+    letterSpacing: 0.4,
+    textTransform: "uppercase",
   },
   rank: {
     fontSize: 14,

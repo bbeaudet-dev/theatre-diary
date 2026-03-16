@@ -274,6 +274,39 @@ export const updateTier = mutation({
   },
 });
 
+const specialLineValidator = v.union(
+  v.literal("wouldSeeAgain"),
+  v.literal("stayedHome")
+);
+
+export const updateSpecialLinePosition = mutation({
+  args: {
+    line: specialLineValidator,
+    position: v.number(),
+  },
+  handler: async (ctx, args) => {
+    const userId = await requireConvexUserId(ctx);
+    const rankings = await ctx.db
+      .query("userRankings")
+      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .first();
+
+    if (!rankings) throw new Error("Rankings not found");
+
+    const clampedPosition = Math.max(
+      0,
+      Math.min(args.position, rankings.showIds.length)
+    );
+
+    if (args.line === "wouldSeeAgain") {
+      await ctx.db.patch(rankings._id, { wouldSeeAgainLineIndex: clampedPosition });
+      return;
+    }
+
+    await ctx.db.patch(rankings._id, { stayedHomeLineIndex: clampedPosition });
+  },
+});
+
 export const getInsertionPreview = query({
   args: {
     selectedTier: tierValidator,

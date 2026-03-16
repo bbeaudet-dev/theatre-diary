@@ -74,6 +74,8 @@ export default defineSchema({
   userRankings: defineTable({
     userId: v.id("users"),
     showIds: v.array(v.id("shows")),
+    wouldSeeAgainLineIndex: v.optional(v.number()),
+    stayedHomeLineIndex: v.optional(v.number()),
   }).index("by_user", ["userId"]),
 
   // Junction table: per-show metadata for each user.
