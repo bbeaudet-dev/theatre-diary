@@ -32,7 +32,13 @@ export default function PublicProfileScreen() {
 
   return (
     <SafeAreaView style={styles.container} edges={["bottom"]}>
-      <Stack.Screen options={{ headerShown: true, title: displayName }} />
+      <Stack.Screen
+        options={{
+          headerShown: true,
+          title: displayName,
+          headerBackButtonDisplayMode: "minimal",
+        }}
+      />
       <ScrollView contentContainerStyle={styles.content}>
         {profile === undefined ? <Text style={styles.loading}>Loading profile...</Text> : null}
         {profile === null ? <Text style={styles.loading}>User not found.</Text> : null}

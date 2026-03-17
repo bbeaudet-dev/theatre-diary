@@ -32,7 +32,9 @@ export default function FollowListScreen() {
 
   return (
     <SafeAreaView style={styles.container} edges={["bottom"]}>
-      <Stack.Screen options={{ headerShown: true, title }} />
+      <Stack.Screen
+        options={{ headerShown: true, title, headerBackButtonDisplayMode: "minimal" }}
+      />
       <ScrollView contentContainerStyle={styles.content}>
         {(profile === undefined ||
           (kind === "followers" ? followers === undefined : following === undefined)) && (

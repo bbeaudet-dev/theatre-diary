@@ -110,12 +110,32 @@ export default function ProfileScreen() {
           <Text style={styles.profileName}>{displayName}</Text>
           {username ? <Text style={styles.profileUsername}>@{username}</Text> : null}
           <View style={styles.profileCountsRow}>
-            <Text style={styles.profileCountText}>
-              {myProfile?.followerCount ?? 0} followers
-            </Text>
-            <Text style={styles.profileCountText}>
-              {myProfile?.followingCount ?? 0} following
-            </Text>
+            <Pressable
+              disabled={!username}
+              onPress={() =>
+                router.push({
+                  pathname: "/user/[username]/[kind]",
+                  params: { username, kind: "followers" },
+                })
+              }
+            >
+              <Text style={styles.profileCountText}>
+                {myProfile?.followerCount ?? 0} followers
+              </Text>
+            </Pressable>
+            <Pressable
+              disabled={!username}
+              onPress={() =>
+                router.push({
+                  pathname: "/user/[username]/[kind]",
+                  params: { username, kind: "following" },
+                })
+              }
+            >
+              <Text style={styles.profileCountText}>
+                {myProfile?.followingCount ?? 0} following
+              </Text>
+            </Pressable>
           </View>
           {myProfile?.bio ? <Text style={styles.profileBio}>{myProfile.bio}</Text> : null}
           {myProfile?.location ? <Text style={styles.profileLocation}>{myProfile.location}</Text> : null}
