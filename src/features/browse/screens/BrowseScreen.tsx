@@ -7,6 +7,8 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { ProductionCard } from "@/features/browse/components/ProductionCard";
 import { useBrowseData } from "@/features/browse/hooks/useBrowseData";
 import { styles } from "@/features/browse/styles";
+import { Colors } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
 
 type BrowseMode = "current" | "all";
 
@@ -21,6 +23,21 @@ export default function BrowseScreen() {
   const isNavigatingRef = useRef(false);
   const { allProductions, sections, shows, currentCount, allCount } = useBrowseData(search);
 
+  const colorScheme = useColorScheme();
+  const theme = colorScheme ?? "light";
+  const backgroundColor = Colors[theme].background;
+  const primaryTextColor = Colors[theme].text;
+  const inputBackgroundColor = theme === "dark" ? Colors.dark.surface : "#f0f0f0";
+  const placeholderColor = theme === "dark" ? "#777" : "#aaa";
+  const mutedTextColor = Colors[theme].mutedText;
+  const chipBorderColor = Colors[theme].border;
+  const chipBackground = Colors[theme].surface;
+  const chipActiveBackground = theme === "dark" ? Colors.dark.text : "#111";
+  const chipTextActiveColor = theme === "dark" ? "#111" : "#fff";
+  const cardBackground = Colors[theme].surfaceElevated;
+  const cardPosterBackground = Colors[theme].surface;
+  const linkColor = Colors[theme].accent;
+
   useEffect(() => {
     setAllShowsLimit(ALL_SHOWS_PAGE_SIZE);
   }, [search]);
@@ -29,17 +46,17 @@ export default function BrowseScreen() {
   const isLoadingAll = shows === undefined;
 
   return (
-    <SafeAreaView style={styles.container} edges={["top"]}>
+    <SafeAreaView style={[styles.container, { backgroundColor }]} edges={["top"]}>
       <View style={styles.header}>
-        <Text style={styles.title}>Browse</Text>
+        <Text style={[styles.title, { color: primaryTextColor }]}>Browse</Text>
       </View>
 
       <View style={styles.searchRow}>
-        <View style={styles.searchInputWrapper}>
+        <View style={[styles.searchInputWrapper, { backgroundColor: inputBackgroundColor }]}>
           <TextInput
-            style={styles.searchInput}
+            style={[styles.searchInput, { color: primaryTextColor }]}
             placeholder="Search shows or theatres…"
-            placeholderTextColor="#aaa"
+            placeholderTextColor={placeholderColor}
             value={search}
             onChangeText={setSearch}
             returnKeyType="search"
@@ -60,33 +77,55 @@ export default function BrowseScreen() {
       <View style={styles.filterRow}>
         <View style={styles.filterChips}>
           <Pressable
-            style={[styles.filterChip, mode === "current" && styles.filterChipActive]}
+            style={[
+              styles.filterChip,
+              { borderColor: chipBorderColor, backgroundColor: chipBackground },
+              mode === "current" && [
+                styles.filterChipActive,
+                { backgroundColor: chipActiveBackground, borderColor: chipActiveBackground },
+              ],
+            ]}
             onPress={() => setMode("current")}
           >
             <Text
               style={[
                 styles.filterChipText,
-                mode === "current" && styles.filterChipTextActive,
+                { color: mutedTextColor },
+                mode === "current" && [
+                  styles.filterChipTextActive,
+                  { color: chipTextActiveColor },
+                ],
               ]}
             >
               Current
             </Text>
           </Pressable>
           <Pressable
-            style={[styles.filterChip, mode === "all" && styles.filterChipActive]}
+            style={[
+              styles.filterChip,
+              { borderColor: chipBorderColor, backgroundColor: chipBackground },
+              mode === "all" && [
+                styles.filterChipActive,
+                { backgroundColor: chipActiveBackground, borderColor: chipActiveBackground },
+              ],
+            ]}
             onPress={() => setMode("all")}
           >
             <Text
               style={[
                 styles.filterChipText,
-                mode === "all" && styles.filterChipTextActive,
+                { color: mutedTextColor },
+                mode === "all" && [
+                  styles.filterChipTextActive,
+                  { color: chipTextActiveColor },
+                ],
               ]}
             >
               All
             </Text>
           </Pressable>
         </View>
-        <Text style={styles.countText}>
+        <Text style={[styles.countText, { color: mutedTextColor }]}>
           {currentCount} current · {allCount} total
         </Text>
       </View>
@@ -98,9 +137,9 @@ export default function BrowseScreen() {
       >
         {mode === "current" ? (
           isLoadingCurrent ? (
-            <Text style={styles.empty}>Loading…</Text>
+            <Text style={[styles.empty, { color: mutedTextColor }]}>Loading…</Text>
           ) : sections.length === 0 ? (
-            <Text style={styles.empty}>
+            <Text style={[styles.empty, { color: mutedTextColor }]}>
               {search ? "No results." : "No current or upcoming productions yet."}
             </Text>
           ) : (
@@ -132,15 +171,17 @@ export default function BrowseScreen() {
             ))
           )
         ) : isLoadingAll ? (
-          <Text style={styles.empty}>Loading…</Text>
+          <Text style={[styles.empty, { color: mutedTextColor }]}>Loading…</Text>
         ) : !shows || shows.length === 0 ? (
-          <Text style={styles.empty}>{search ? "No results." : "No shows yet."}</Text>
+          <Text style={[styles.empty, { color: mutedTextColor }]}>
+            {search ? "No results." : "No shows yet."}
+          </Text>
         ) : (
           <>
             {shows.slice(0, allShowsLimit).map((show) => (
               <Pressable
                 key={show._id}
-                style={styles.card}
+                style={[styles.card, { backgroundColor: cardBackground }]}
                 onPress={() => {
                   if (isNavigatingRef.current) return;
                   isNavigatingRef.current = true;
@@ -156,7 +197,9 @@ export default function BrowseScreen() {
                   }, 500);
                 }}
               >
-                <Text style={styles.showName}>{show.name}</Text>
+                <Text style={[styles.showName, { color: primaryTextColor }]} numberOfLines={1}>
+                  {show.name}
+                </Text>
               </Pressable>
             ))}
             {shows.length > allShowsLimit && (
@@ -164,7 +207,7 @@ export default function BrowseScreen() {
                 style={styles.loadMoreButton}
                 onPress={() => setAllShowsLimit((prev) => prev + ALL_SHOWS_PAGE_SIZE)}
               >
-                <Text style={styles.loadMoreText}>
+                  <Text style={[styles.loadMoreText, { color: linkColor }]}>
                   Load more ({shows.length - allShowsLimit} remaining)
                 </Text>
               </Pressable>

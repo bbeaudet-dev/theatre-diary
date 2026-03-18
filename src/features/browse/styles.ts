@@ -1,7 +1,7 @@
 import { StyleSheet } from "react-native";
 
 export const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#fff" },
+  container: { flex: 1 },
   header: {
     paddingHorizontal: 16,
     paddingTop: 8,
@@ -21,7 +21,6 @@ export const styles = StyleSheet.create({
     flex: 1,
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#f0f0f0",
     borderRadius: 10,
     paddingHorizontal: 10,
   },
@@ -30,7 +29,6 @@ export const styles = StyleSheet.create({
     paddingHorizontal: 4,
     paddingVertical: 10,
     fontSize: 15,
-    color: "#111",
   },
   clearSearchButton: {
     marginLeft: 6,
@@ -39,7 +37,6 @@ export const styles = StyleSheet.create({
   },
   clearSearchText: {
     fontSize: 16,
-    color: "#777",
   },
   list: { flex: 1 },
   listContent: { paddingHorizontal: 16, paddingBottom: 32 },
@@ -59,36 +56,27 @@ export const styles = StyleSheet.create({
     paddingVertical: 6,
     borderRadius: 999,
     borderWidth: 1,
-    borderColor: "#ddd",
-    backgroundColor: "#fff",
   },
-  filterChipActive: {
-    backgroundColor: "#111",
-    borderColor: "#111",
-  },
+  filterChipActive: {},
   filterChipText: {
     fontSize: 13,
     fontWeight: "600",
-    color: "#555",
   },
   filterChipTextActive: {
     color: "#fff",
   },
   countText: {
     fontSize: 13,
-    color: "#777",
   },
   sectionHeader: {
     fontSize: 12,
     fontWeight: "700",
-    color: "#999",
     letterSpacing: 0.6,
     textTransform: "uppercase",
     marginTop: 16,
     marginBottom: 8,
   },
   empty: {
-    color: "#aaa",
     fontSize: 15,
     textAlign: "center",
     marginTop: 48,
@@ -103,10 +91,8 @@ export const styles = StyleSheet.create({
   loadMoreText: {
     fontSize: 15,
     fontWeight: "600",
-    color: "#2c67b8",
   },
   card: {
-    backgroundColor: "#f9f9f9",
     borderRadius: 12,
     padding: 14,
     marginBottom: 8,
@@ -122,11 +108,9 @@ export const styles = StyleSheet.create({
   showName: {
     fontSize: 16,
     fontWeight: "700",
-    color: "#111",
   },
   theatre: {
     fontSize: 13,
-    color: "#666",
   },
   badge: {
     paddingHorizontal: 8,
@@ -146,7 +130,6 @@ export const styles = StyleSheet.create({
   },
   dateRange: {
     fontSize: 12,
-    color: "#888",
   },
   closingPill: {
     backgroundColor: "#fee2e2",
