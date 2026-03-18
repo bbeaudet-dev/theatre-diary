@@ -11,6 +11,8 @@ import type { Id } from "@/convex/_generated/dataModel";
 import { useProfileListsData } from "@/features/profile/hooks/useProfileListsData";
 import { styles } from "@/features/profile/styles";
 import { ListsSection } from "@/features/profile/components/ListsSection";
+import { Colors } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
 
 export default function ProfileScreen() {
   const tabBarHeight = useBottomTabBarHeight();
@@ -84,31 +86,44 @@ export default function ProfileScreen() {
     .map((part: string) => part[0]?.toUpperCase() ?? "")
     .join("");
 
+  const colorScheme = useColorScheme();
+  const theme = colorScheme ?? "light";
+  const backgroundColor = Colors[theme].background;
+  const primaryTextColor = Colors[theme].text;
+  const surfaceColor = Colors[theme].surfaceElevated;
+  const borderColor = Colors[theme].border;
+  const mutedTextColor = Colors[theme].mutedText;
+  const chipBackground = Colors[theme].surface;
+
   return (
-    <SafeAreaView style={styles.container} edges={["top"]}>
+    <SafeAreaView style={[styles.container, { backgroundColor }]} edges={["top"]}>
       <ScrollView
         contentContainerStyle={[styles.content, { paddingBottom: tabBarHeight + 24 }]}
         keyboardShouldPersistTaps="handled"
       >
         <View style={styles.profileHeaderRow}>
-          <Text style={styles.title}>Profile</Text>
+          <Text style={[styles.title, { color: primaryTextColor }]}>Profile</Text>
           <Pressable
-            style={styles.menuButton}
+            style={[styles.menuButton, { borderColor, backgroundColor: chipBackground }]}
             onPress={() => router.push("/account-settings")}
           >
-            <Text style={styles.menuButtonText}>☰</Text>
+            <Text style={[styles.menuButtonText, { color: primaryTextColor }]}>☰</Text>
           </Pressable>
         </View>
-        <View style={styles.profileHero}>
+        <View style={[styles.profileHero, { backgroundColor: surfaceColor, borderColor }]}>
           {myProfile?.avatarUrl ? (
             <Image source={{ uri: myProfile.avatarUrl }} style={styles.avatarImage} />
           ) : (
             <View style={styles.avatarFallback}>
-              <Text style={styles.avatarFallbackText}>{initials || "U"}</Text>
+              <Text style={[styles.avatarFallbackText, { color: primaryTextColor }]}>
+                {initials || "U"}
+              </Text>
             </View>
           )}
-          <Text style={styles.profileName}>{displayName}</Text>
-          {username ? <Text style={styles.profileUsername}>@{username}</Text> : null}
+          <Text style={[styles.profileName, { color: primaryTextColor }]}>{displayName}</Text>
+          {username ? (
+            <Text style={[styles.profileUsername, { color: mutedTextColor }]}>@{username}</Text>
+          ) : null}
           <View style={styles.profileCountsRow}>
             <Pressable
               disabled={!username}
@@ -119,7 +134,7 @@ export default function ProfileScreen() {
                 })
               }
             >
-              <Text style={styles.profileCountText}>
+              <Text style={[styles.profileCountText, { color: mutedTextColor }]}>
                 {myProfile?.followerCount ?? 0} followers
               </Text>
             </Pressable>
@@ -132,13 +147,19 @@ export default function ProfileScreen() {
                 })
               }
             >
-              <Text style={styles.profileCountText}>
+              <Text style={[styles.profileCountText, { color: mutedTextColor }]}>
                 {myProfile?.followingCount ?? 0} following
               </Text>
             </Pressable>
           </View>
-          {myProfile?.bio ? <Text style={styles.profileBio}>{myProfile.bio}</Text> : null}
-          {myProfile?.location ? <Text style={styles.profileLocation}>{myProfile.location}</Text> : null}
+          {myProfile?.bio ? (
+            <Text style={[styles.profileBio, { color: primaryTextColor }]}>{myProfile.bio}</Text>
+          ) : null}
+          {myProfile?.location ? (
+            <Text style={[styles.profileLocation, { color: mutedTextColor }]}>
+              {myProfile.location}
+            </Text>
+          ) : null}
         </View>
         <ListsSection
           isShowingCreateInput={isShowingCreateInput}

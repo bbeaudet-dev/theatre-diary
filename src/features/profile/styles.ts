@@ -3,7 +3,6 @@ import { StyleSheet } from "react-native";
 export const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fff",
   },
   content: {
     padding: 16,
@@ -28,7 +27,6 @@ export const styles = StyleSheet.create({
     justifyContent: "center",
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: "#d4d4d4",
-    backgroundColor: "#fff",
   },
   menuButtonText: {
     fontSize: 18,
@@ -39,7 +37,6 @@ export const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: "#e2e2e2",
     borderRadius: 12,
-    backgroundColor: "#fbfbfb",
     alignItems: "center",
     paddingHorizontal: 16,
     paddingVertical: 18,
@@ -55,25 +52,21 @@ export const styles = StyleSheet.create({
     width: 84,
     height: 84,
     borderRadius: 42,
-    backgroundColor: "#d9d9d9",
     alignItems: "center",
     justifyContent: "center",
   },
   avatarFallbackText: {
     fontSize: 28,
     fontWeight: "700",
-    color: "#3a3a3a",
   },
   profileName: {
     fontSize: 22,
     fontWeight: "700",
-    color: "#151515",
     marginTop: 4,
   },
   profileUsername: {
     fontSize: 14,
     fontWeight: "600",
-    color: "#6a6a6a",
   },
   profileCountsRow: {
     flexDirection: "row",
@@ -83,27 +76,22 @@ export const styles = StyleSheet.create({
   },
   profileCountText: {
     fontSize: 13,
-    color: "#5f5f5f",
     fontWeight: "600",
   },
   profileBio: {
     fontSize: 14,
-    color: "#2a2a2a",
     lineHeight: 20,
     textAlign: "center",
   },
   profileLocation: {
     fontSize: 13,
-    color: "#6d6d6d",
   },
   info: {
     padding: 16,
-    backgroundColor: "#f5f5f5",
     borderRadius: 12,
   },
   label: {
     fontSize: 12,
-    color: "#888",
     textTransform: "uppercase",
     letterSpacing: 1,
     marginBottom: 4,
@@ -114,7 +102,6 @@ export const styles = StyleSheet.create({
   },
   name: {
     fontSize: 14,
-    color: "#666",
     marginTop: 4,
   },
   section: {
@@ -123,7 +110,6 @@ export const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 12,
     gap: 12,
-    backgroundColor: "#fbfbfb",
   },
   sectionHeader: {
     flexDirection: "row",
@@ -133,7 +119,6 @@ export const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: "700",
-    color: "#1f1f1f",
   },
   iconButton: {
     width: 32,
@@ -143,7 +128,6 @@ export const styles = StyleSheet.create({
     justifyContent: "center",
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: "#d3d3d3",
-    backgroundColor: "#fff",
   },
   inlineCreateRow: {
     flexDirection: "row",
@@ -157,7 +141,6 @@ export const styles = StyleSheet.create({
     borderRadius: 10,
     paddingHorizontal: 12,
     paddingVertical: 10,
-    backgroundColor: "#fff",
     fontSize: 15,
   },
   multilineInput: {
@@ -168,10 +151,8 @@ export const styles = StyleSheet.create({
     borderRadius: 10,
     paddingVertical: 10,
     alignItems: "center",
-    backgroundColor: "#1f1f1f",
   },
   primaryButtonText: {
-    color: "#fff",
     fontWeight: "700",
     fontSize: 14,
   },
@@ -181,10 +162,8 @@ export const styles = StyleSheet.create({
     borderColor: "#ccc",
     paddingVertical: 10,
     alignItems: "center",
-    backgroundColor: "#fff",
   },
   secondaryButtonText: {
-    color: "#222",
     fontWeight: "700",
     fontSize: 14,
   },
@@ -194,7 +173,6 @@ export const styles = StyleSheet.create({
     borderRadius: 10,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#222",
   },
   listRow: {
     borderWidth: StyleSheet.hairlineWidth,
@@ -202,7 +180,6 @@ export const styles = StyleSheet.create({
     borderRadius: 10,
     paddingHorizontal: 12,
     paddingVertical: 10,
-    backgroundColor: "#fff",
   },
   rowTop: {
     flexDirection: "row",
@@ -213,11 +190,9 @@ export const styles = StyleSheet.create({
   listName: {
     fontSize: 16,
     fontWeight: "600",
-    color: "#1f1f1f",
   },
   listMeta: {
     fontSize: 12,
-    color: "#767676",
   },
   listInfo: {
     flex: 1,
@@ -229,21 +204,17 @@ export const styles = StyleSheet.create({
   pendingText: {
     fontSize: 12,
     fontWeight: "700",
-    color: "#555",
   },
   errorText: {
-    color: "#cc2a2a",
     fontSize: 13,
     lineHeight: 18,
   },
   signOutButton: {
     padding: 14,
-    backgroundColor: "#ff3b30",
     borderRadius: 10,
     alignItems: "center",
   },
   signOutText: {
-    color: "white",
     fontSize: 16,
     fontWeight: "600",
   },

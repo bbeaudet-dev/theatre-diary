@@ -1,6 +1,8 @@
 import { Modal, Pressable, StyleSheet, Text, View } from "react-native";
 import type { Id } from "@/convex/_generated/dataModel";
 import { VisitsList } from "@/components/show-row-accordion";
+import { Colors } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
 
 interface ShowDetailModalProps {
   showId: Id<"shows"> | null;
@@ -19,6 +21,14 @@ export function ShowDetailModal({
   onViewShowDetails,
   onClose,
 }: ShowDetailModalProps) {
+  const colorScheme = useColorScheme();
+  const theme = colorScheme ?? "light";
+  const backgroundColor = Colors[theme].surfaceElevated;
+  const headerBorder = Colors[theme].border;
+  const primaryTextColor = Colors[theme].text;
+  const mutedTextColor = Colors[theme].mutedText;
+  const accentColor = Colors[theme].accent;
+
   return (
     <Modal
       visible={showId !== null}
@@ -28,20 +38,25 @@ export function ShowDetailModal({
     >
       <View style={styles.backdrop}>
         <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
-        <View style={styles.card}>
-          <View style={styles.header}>
-            <Text style={styles.rank}>
+        <View style={[styles.card, { backgroundColor }]}>
+          <View style={[styles.header, { borderBottomColor: headerBorder }]}>
+            <Text style={[styles.rank, { color: mutedTextColor }]}>
               {rank === null ? "Unranked" : `#${rank} / ${rankedCount}`}
             </Text>
-            <Text style={styles.title} numberOfLines={2}>
+            <Text style={[styles.title, { color: primaryTextColor }]} numberOfLines={2}>
               {showName}
             </Text>
             <Pressable onPress={onClose} hitSlop={12} style={styles.closeBtn}>
-              <Text style={styles.closeText}>✕</Text>
+              <Text style={[styles.closeText, { color: mutedTextColor }]}>✕</Text>
             </Pressable>
           </View>
-          <Pressable style={styles.viewDetailsRow} onPress={onViewShowDetails}>
-            <Text style={styles.viewDetailsText}>View Show Details</Text>
+          <Pressable
+            style={[styles.viewDetailsRow, { borderBottomColor: headerBorder }]}
+            onPress={onViewShowDetails}
+          >
+            <Text style={[styles.viewDetailsText, { color: accentColor }]}>
+              View Show Details
+            </Text>
           </Pressable>
           {showId && <VisitsList showId={showId} />}
         </View>
@@ -61,7 +76,6 @@ const styles = StyleSheet.create({
   card: {
     width: "100%",
     maxHeight: "70%",
-    backgroundColor: "#fff",
     borderRadius: 16,
     overflow: "hidden",
   },
@@ -71,12 +85,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 14,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: "#e0e0e0",
   },
   rank: {
     fontSize: 15,
     fontWeight: "bold",
-    color: "#333",
     marginRight: 8,
   },
   title: {
@@ -90,17 +102,14 @@ const styles = StyleSheet.create({
   },
   closeText: {
     fontSize: 18,
-    color: "#999",
   },
   viewDetailsRow: {
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: "#e5e5e5",
   },
   viewDetailsText: {
     fontSize: 13,
-    color: "#007AFF",
     fontWeight: "600",
   },
 });

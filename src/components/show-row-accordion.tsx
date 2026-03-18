@@ -15,6 +15,8 @@ import { Swipeable } from "react-native-gesture-handler";
 
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
+import { Colors } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
 
 type ShowType = "musical" | "play" | "opera" | "dance" | "other";
 
@@ -52,6 +54,13 @@ function AddVisitForm({
   const dateRef = useRef<TextInput>(null);
 
   const createVisit = useMutation(api.visits.create);
+  const colorScheme = useColorScheme();
+  const theme = colorScheme ?? "light";
+  const surfaceColor = Colors[theme].surface;
+  const borderColor = Colors[theme].border;
+  const primaryTextColor = Colors[theme].text;
+  const mutedTextColor = Colors[theme].mutedText;
+  const accentColor = Colors[theme].accent;
 
   const handleSubmit = () => {
     const trimmedDate = date.trim();
@@ -71,12 +80,22 @@ function AddVisitForm({
   };
 
   return (
-    <View style={formStyles.container}>
+    <View
+      style={[
+        formStyles.container,
+        {
+          borderTopColor: borderColor,
+        },
+      ]}
+    >
       <View style={formStyles.field}>
-        <Text style={formStyles.label}>Date</Text>
+        <Text style={[formStyles.label, { color: mutedTextColor }]}>Date</Text>
         <TextInput
           ref={dateRef}
-          style={formStyles.input}
+          style={[
+            formStyles.input,
+            { backgroundColor: surfaceColor, borderColor, color: primaryTextColor },
+          ]}
           value={date}
           onChangeText={setDate}
           placeholder="YYYY-MM-DD"
@@ -87,9 +106,12 @@ function AddVisitForm({
         />
       </View>
       <View style={formStyles.field}>
-        <Text style={formStyles.label}>Theatre</Text>
+        <Text style={[formStyles.label, { color: mutedTextColor }]}>Theatre</Text>
         <TextInput
-          style={formStyles.input}
+          style={[
+            formStyles.input,
+            { backgroundColor: surfaceColor, borderColor, color: primaryTextColor },
+          ]}
           value={theatre}
           onChangeText={setTheatre}
           placeholder="Optional"
@@ -98,9 +120,12 @@ function AddVisitForm({
         />
       </View>
       <View style={formStyles.field}>
-        <Text style={formStyles.label}>Notes</Text>
+        <Text style={[formStyles.label, { color: mutedTextColor }]}>Notes</Text>
         <TextInput
-          style={formStyles.input}
+          style={[
+            formStyles.input,
+            { backgroundColor: surfaceColor, borderColor, color: primaryTextColor },
+          ]}
           value={notes}
           onChangeText={setNotes}
           placeholder="Optional"
@@ -111,11 +136,15 @@ function AddVisitForm({
       </View>
       <View style={formStyles.actions}>
         <Pressable onPress={handleCancel} style={formStyles.cancelBtn}>
-          <Text style={formStyles.cancelText}>Cancel</Text>
+          <Text style={[formStyles.cancelText, { color: mutedTextColor }]}>Cancel</Text>
         </Pressable>
         <Pressable
           onPress={handleSubmit}
-          style={[formStyles.saveBtn, !date.trim() && formStyles.saveBtnDisabled]}
+          style={[
+            formStyles.saveBtn,
+            { backgroundColor: accentColor },
+            !date.trim() && formStyles.saveBtnDisabled,
+          ]}
           disabled={!date.trim()}
         >
           <Text style={formStyles.saveText}>Save</Text>
@@ -131,18 +160,37 @@ export function VisitsList({ showId }: { showId: Id<"shows"> }) {
   const visits = useQuery(api.visits.listByShow, { showId });
   const removeVisit = useMutation(api.visits.remove);
 
+  const colorScheme = useColorScheme();
+  const theme = colorScheme ?? "light";
+  const primaryTextColor = Colors[theme].text;
+  const mutedTextColor = Colors[theme].mutedText;
+  const surfaceColor = Colors[theme].surface;
+  const borderColor = Colors[theme].border;
+  const linkColor = Colors[theme].accent;
+  const dangerColor = Colors[theme].danger;
+
   if (visits === undefined) {
     return (
-      <View style={accordionStyles.expandedBody}>
-        <Text style={accordionStyles.loadingText}>Loading...</Text>
+      <View
+        style={[
+          accordionStyles.expandedBody,
+          { backgroundColor: surfaceColor, borderTopColor: borderColor },
+        ]}
+      >
+        <Text style={[accordionStyles.loadingText, { color: mutedTextColor }]}>Loading...</Text>
       </View>
     );
   }
 
   return (
-    <View style={accordionStyles.expandedBody}>
+    <View
+      style={[
+        accordionStyles.expandedBody,
+        { backgroundColor: surfaceColor, borderTopColor: borderColor },
+      ]}
+    >
       {visits.length === 0 && !isAdding && (
-        <Text style={accordionStyles.noVisits}>No visits logged</Text>
+        <Text style={[accordionStyles.noVisits, { color: mutedTextColor }]}>No visits logged</Text>
       )}
 
       {visits.map((visit) => {
@@ -160,7 +208,7 @@ export function VisitsList({ showId }: { showId: Id<"shows"> }) {
                 })
               }
             >
-              <Text style={accordionStyles.visitText} numberOfLines={1}>
+              <Text style={[accordionStyles.visitText, { color: mutedTextColor }]} numberOfLines={1}>
                 {parts.join("  ·  ")}
               </Text>
             </Pressable>
@@ -168,7 +216,7 @@ export function VisitsList({ showId }: { showId: Id<"shows"> }) {
               onPress={() => removeVisit({ visitId: visit._id })}
               hitSlop={8}
             >
-              <Text style={accordionStyles.visitRemove}>✕</Text>
+              <Text style={[accordionStyles.visitRemove, { color: mutedTextColor }]}>✕</Text>
             </Pressable>
           </View>
         );
@@ -181,7 +229,7 @@ export function VisitsList({ showId }: { showId: Id<"shows"> }) {
           style={accordionStyles.addVisitBtn}
           onPress={() => setIsAdding(true)}
         >
-          <Text style={accordionStyles.addVisitText}>+ Add Visit</Text>
+          <Text style={[accordionStyles.addVisitText, { color: linkColor }]}>+ Add Visit</Text>
         </Pressable>
       )}
     </View>
@@ -189,8 +237,15 @@ export function VisitsList({ showId }: { showId: Id<"shows"> }) {
 }
 
 function RemoveAction({ onPress }: { onPress: () => void }) {
+  const colorScheme = useColorScheme();
+  const theme = colorScheme ?? "light";
+  const dangerColor = Colors[theme].danger;
+
   return (
-    <Pressable style={accordionStyles.removeAction} onPress={onPress}>
+    <Pressable
+      style={[accordionStyles.removeAction, { backgroundColor: dangerColor }]}
+      onPress={onPress}
+    >
       <Text style={accordionStyles.removeActionText}>Remove</Text>
     </Pressable>
   );
@@ -246,6 +301,14 @@ export const ShowRowAccordion = memo(function ShowRowAccordion({
     [handleRemovePress]
   );
 
+  const colorScheme = useColorScheme();
+  const theme = colorScheme ?? "light";
+  const primaryTextColor = Colors[theme].text;
+  const mutedTextColor = Colors[theme].mutedText;
+  const surfaceColor = Colors[theme].surface;
+  const surfaceElevated = Colors[theme].surfaceElevated;
+  const borderColor = Colors[theme].border;
+
   if (isRemoving) {
     return (
       <View>
@@ -267,10 +330,18 @@ export const ShowRowAccordion = memo(function ShowRowAccordion({
           </View>
         ) : null}
         <View
-          style={[accordionStyles.showRow, accordionStyles.showRowRemoving]}
+          style={[
+            accordionStyles.showRow,
+            accordionStyles.showRowRemoving,
+            { backgroundColor: surfaceColor },
+          ]}
         >
-          <ActivityIndicator size="small" color="#999" style={accordionStyles.removingSpinner} />
-          <Text style={accordionStyles.removingName} numberOfLines={1}>
+          <ActivityIndicator
+            size="small"
+            color={mutedTextColor}
+            style={accordionStyles.removingSpinner}
+          />
+          <Text style={[accordionStyles.removingName, { color: mutedTextColor }]} numberOfLines={1}>
             {item.name}
           </Text>
         </View>
@@ -308,25 +379,31 @@ export const ShowRowAccordion = memo(function ShowRowAccordion({
             accordionStyles.showRow,
             isActive && accordionStyles.showRowActive,
             isExpanded && accordionStyles.showRowExpanded,
+            {
+              backgroundColor: isActive ? surfaceElevated : surfaceColor,
+              borderColor,
+            },
           ]}
         >
-          <Text style={accordionStyles.rank}>{rankLabel ?? `#${index + 1}`}</Text>
+          <Text style={[accordionStyles.rank, { color: mutedTextColor }]}>
+            {rankLabel ?? `#${index + 1}`}
+          </Text>
           <Pressable
             style={accordionStyles.showNameWrap}
             onPress={onViewShowDetails}
             disabled={isActive}
           >
-            <Text style={accordionStyles.showName} numberOfLines={1}>
+            <Text style={[accordionStyles.showName, { color: primaryTextColor }]} numberOfLines={1}>
               {item.name}
             </Text>
           </Pressable>
           <Pressable onPress={onToggle} disabled={isActive} hitSlop={8}>
-            <Text style={accordionStyles.chevron}>
+            <Text style={[accordionStyles.chevron, { color: mutedTextColor }]}>
               {isExpanded ? "▾" : "▸"}
             </Text>
           </Pressable>
           <Pressable onLongPress={drag} disabled={isActive} hitSlop={8}>
-            <Text style={accordionStyles.dragHandle}>☰</Text>
+            <Text style={[accordionStyles.dragHandle, { color: mutedTextColor }]}>☰</Text>
           </Pressable>
         </View>
       </Swipeable>
@@ -343,16 +420,10 @@ const accordionStyles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     padding: 12,
-    backgroundColor: "#f5f5f5",
     borderRadius: 10,
+    borderWidth: StyleSheet.hairlineWidth,
   },
   showRowActive: {
-    backgroundColor: "#e8e8e8",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    elevation: 5,
   },
   showRowExpanded: {
     borderBottomLeftRadius: 0,
@@ -368,10 +439,8 @@ const accordionStyles = StyleSheet.create({
     flex: 1,
     fontSize: 15,
     fontWeight: "500",
-    color: "#999",
   },
   removeAction: {
-    backgroundColor: "#FF3B30",
     justifyContent: "center",
     alignItems: "center",
     width: 88,
@@ -395,7 +464,6 @@ const accordionStyles = StyleSheet.create({
   tierBadgeText: {
     fontSize: 12,
     fontWeight: "700",
-    color: "#111",
     letterSpacing: 0.4,
     textTransform: "uppercase",
   },
@@ -403,7 +471,6 @@ const accordionStyles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "bold",
     width: 36,
-    color: "#333",
   },
   showName: {
     fontSize: 15,
@@ -415,31 +482,25 @@ const accordionStyles = StyleSheet.create({
   },
   chevron: {
     fontSize: 14,
-    color: "#999",
     paddingHorizontal: 4,
   },
   dragHandle: {
     fontSize: 18,
-    color: "#ccc",
     paddingLeft: 4,
   },
   expandedBody: {
-    backgroundColor: "#fafafa",
     borderBottomLeftRadius: 10,
     borderBottomRightRadius: 10,
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: "#e0e0e0",
     paddingHorizontal: 12,
     paddingVertical: 8,
   },
   loadingText: {
     fontSize: 13,
-    color: "#999",
     paddingVertical: 4,
   },
   noVisits: {
     fontSize: 13,
-    color: "#bbb",
     fontStyle: "italic",
     paddingVertical: 4,
   },
@@ -453,11 +514,9 @@ const accordionStyles = StyleSheet.create({
   },
   visitText: {
     fontSize: 13,
-    color: "#555",
   },
   visitRemove: {
     fontSize: 12,
-    color: "#ccc",
     paddingLeft: 8,
   },
   addVisitBtn: {
@@ -469,7 +528,6 @@ const accordionStyles = StyleSheet.create({
   },
   addVisitText: {
     fontSize: 13,
-    color: "#007AFF",
     fontWeight: "500",
   },
 });
@@ -478,7 +536,6 @@ const formStyles = StyleSheet.create({
   container: {
     paddingTop: 4,
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: "#e8e8e8",
     marginTop: 4,
   },
   field: {
@@ -489,7 +546,6 @@ const formStyles = StyleSheet.create({
   label: {
     fontSize: 13,
     fontWeight: "600",
-    color: "#666",
     width: 56,
   },
   input: {
@@ -497,10 +553,8 @@ const formStyles = StyleSheet.create({
     fontSize: 14,
     paddingVertical: 6,
     paddingHorizontal: 8,
-    backgroundColor: "#fff",
     borderRadius: 6,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: "#ddd",
   },
   actions: {
     flexDirection: "row",
@@ -515,12 +569,10 @@ const formStyles = StyleSheet.create({
   },
   cancelText: {
     fontSize: 13,
-    color: "#999",
   },
   saveBtn: {
     paddingHorizontal: 14,
     paddingVertical: 7,
-    backgroundColor: "#007AFF",
     borderRadius: 6,
   },
   saveBtnDisabled: {

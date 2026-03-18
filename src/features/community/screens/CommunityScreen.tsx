@@ -6,6 +6,8 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { api } from "@/convex/_generated/api";
+import { Colors } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
 
 type FeedTab = "following" | "global";
 
@@ -58,26 +60,78 @@ export default function CommunityScreen() {
   const isLoading =
     selectedTab === "following" ? followingFeed === undefined : globalFeed === undefined;
 
+  const colorScheme = useColorScheme();
+  const theme = colorScheme ?? "light";
+  const backgroundColor = Colors[theme].background;
+  const primaryTextColor = Colors[theme].text;
+  const mutedTextColor = theme === "dark" ? "#a0a4aa" : "#666";
+  const cardBackground = theme === "dark" ? "#18181b" : "#fff";
+  const cardBorder = theme === "dark" ? "#27272f" : "#ddd";
+  const segmentBorder = theme === "dark" ? "#3a3a44" : "#d6d6d6";
+  const segmentBackground = theme === "dark" ? "#111115" : "#fff";
+  const segmentBackgroundActive = theme === "dark" ? "#fff" : "#1f1f1f";
+  const segmentTextColor = theme === "dark" ? "#b0b4bc" : "#444";
+  const segmentTextActiveColor = theme === "dark" ? "#111" : "#fff";
+  const actorHandleColor = theme === "dark" ? "#d1d5f9" : "#4d4d4d";
+  const actorLinkColor = theme === "dark" ? "#7ea2ff" : "#2f62d8";
+  const showTextColor = theme === "dark" ? "#f5f5f5" : "#111";
+  const subTextColor = mutedTextColor;
+  const notesTextColor = theme === "dark" ? "#e4e4e7" : "#2b2b2b";
+  const rankTextColor = mutedTextColor;
+  const posterBackground = theme === "dark" ? "#27272f" : "#efefef";
+  const posterFallbackTextColor = theme === "dark" ? "#a1a1aa" : "#888";
+  const emptyTextColor = theme === "dark" ? "#9ca3af" : "#808080";
+
   return (
-    <SafeAreaView style={styles.container} edges={["top"]}>
+    <SafeAreaView style={[styles.container, { backgroundColor }]} edges={["top"]}>
       <View style={styles.header}>
-        <Text style={styles.title}>Community</Text>
+        <Text style={[styles.title, { color: primaryTextColor }]}>Community</Text>
         <View style={styles.segmentRow}>
           <Pressable
-            style={[styles.segmentButton, selectedTab === "following" && styles.segmentButtonActive]}
+            style={[
+              styles.segmentButton,
+              { borderColor: segmentBorder, backgroundColor: segmentBackground },
+              selectedTab === "following" && [
+                styles.segmentButtonActive,
+                { backgroundColor: segmentBackgroundActive, borderColor: segmentBackgroundActive },
+              ],
+            ]}
             onPress={() => setSelectedTab("following")}
           >
             <Text
-              style={[styles.segmentButtonText, selectedTab === "following" && styles.segmentButtonTextActive]}
+              style={[
+                styles.segmentButtonText,
+                { color: segmentTextColor },
+                selectedTab === "following" && [
+                  styles.segmentButtonTextActive,
+                  { color: segmentTextActiveColor },
+                ],
+              ]}
             >
               Following
             </Text>
           </Pressable>
           <Pressable
-            style={[styles.segmentButton, selectedTab === "global" && styles.segmentButtonActive]}
+            style={[
+              styles.segmentButton,
+              { borderColor: segmentBorder, backgroundColor: segmentBackground },
+              selectedTab === "global" && [
+                styles.segmentButtonActive,
+                { backgroundColor: segmentBackgroundActive, borderColor: segmentBackgroundActive },
+              ],
+            ]}
             onPress={() => setSelectedTab("global")}
           >
-            <Text style={[styles.segmentButtonText, selectedTab === "global" && styles.segmentButtonTextActive]}>
+            <Text
+              style={[
+                styles.segmentButtonText,
+                { color: segmentTextColor },
+                selectedTab === "global" && [
+                  styles.segmentButtonTextActive,
+                  { color: segmentTextActiveColor },
+                ],
+              ]}
+            >
               Global
             </Text>
           </Pressable>
@@ -85,9 +139,11 @@ export default function CommunityScreen() {
       </View>
 
       <ScrollView contentContainerStyle={styles.content}>
-        {isLoading ? <Text style={styles.emptyText}>Loading posts...</Text> : null}
+        {isLoading ? (
+          <Text style={[styles.emptyText, { color: emptyTextColor }]}>Loading posts...</Text>
+        ) : null}
         {!isLoading && posts.length === 0 ? (
-          <Text style={styles.emptyText}>
+          <Text style={[styles.emptyText, { color: emptyTextColor }]}>
             {selectedTab === "following"
               ? "No posts yet from people you follow."
               : "No community posts yet."}
@@ -100,7 +156,13 @@ export default function CommunityScreen() {
                 .filter(Boolean)
                 .join(" - ");
               return (
-                <View key={post._id} style={styles.postCard}>
+                <View
+                  key={post._id}
+                  style={[
+                    styles.postCard,
+                    { backgroundColor: cardBackground, borderColor: cardBorder },
+                  ]}
+                >
                   <View style={styles.postRow}>
                     <View style={styles.postMain}>
                       <Pressable
@@ -111,11 +173,13 @@ export default function CommunityScreen() {
                           })
                         }
                       >
-                        <Text style={styles.actorHandleText}>@{post.actor.username}</Text>
+                        <Text style={[styles.actorHandleText, { color: actorHandleColor }]}>
+                          @{post.actor.username}
+                        </Text>
                       </Pressable>
-                      <Text style={styles.postTitle}>
+                      <Text style={[styles.postTitle, { color: primaryTextColor }]}>
                         <Text
-                          style={styles.actorText}
+                          style={[styles.actorText, { color: actorLinkColor }]}
                           onPress={() =>
                             router.push({
                               pathname: "/user/[username]",
@@ -125,25 +189,40 @@ export default function CommunityScreen() {
                         >
                           {actorLabel}
                         </Text>{" "}
-                        saw <Text style={styles.showText}>{post.show.name}</Text>{" "}
+                        saw{" "}
+                        <Text style={[styles.showText, { color: showTextColor }]}>
+                          {post.show.name}
+                        </Text>{" "}
                         {formatRelativeVisitDate(post.visitDate)}
                       </Text>
-                      {location ? <Text style={styles.subText}>{location}</Text> : null}
-                      {post.notes ? <Text style={styles.notesText}>{post.notes}</Text> : null}
+                      {location ? (
+                        <Text style={[styles.subText, { color: subTextColor }]}>{location}</Text>
+                      ) : null}
+                      {post.notes ? (
+                        <Text style={[styles.notesText, { color: notesTextColor }]}>
+                          {post.notes}
+                        </Text>
+                      ) : null}
                       {post.rankAtPost ? (
-                        <Text style={styles.rankText}>
+                        <Text style={[styles.rankText, { color: rankTextColor }]}>
                           Ranked #{post.rankAtPost} / {post.rankingTotal}
                         </Text>
                       ) : (
-                        <Text style={styles.rankText}>Not currently ranked</Text>
+                        <Text style={[styles.rankText, { color: rankTextColor }]}>
+                          Not currently ranked
+                        </Text>
                       )}
                     </View>
-                    <View style={styles.posterWrap}>
+                    <View style={[styles.posterWrap, { backgroundColor: posterBackground }]}>
                       {post.show.images[0] ? (
                         <Image source={{ uri: post.show.images[0] }} style={styles.posterImage} />
                       ) : (
                         <View style={styles.posterFallback}>
-                          <Text style={styles.posterFallbackText}>No art</Text>
+                          <Text
+                            style={[styles.posterFallbackText, { color: posterFallbackTextColor }]}
+                          >
+                            No art
+                          </Text>
                         </View>
                       )}
                     </View>

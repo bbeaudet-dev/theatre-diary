@@ -11,6 +11,8 @@ import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from "react";
 import { StyleSheet, Text, View, type LayoutChangeEvent } from "react-native";
 import type { Id } from "@/convex/_generated/dataModel";
+import { Colors } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
 
 type ShowType = "musical" | "play" | "opera" | "dance" | "other";
 
@@ -357,6 +359,11 @@ export function TheatreCloud({ shows, onShowPress }: TheatreCloudProps) {
 
   const placements = useMemo(() => computeLayout(shows), [shows]);
 
+  const colorScheme = useColorScheme();
+  const theme = colorScheme ?? "light";
+  const backgroundColor = Colors[theme].background;
+  const emptyTextColor = Colors[theme].text;
+
   // Float animation — each item wanders around its home position
   const animTimeRef = useRef(0);
   const [, forceUpdate] = useReducer((n: number) => n + 1, 0);
@@ -472,14 +479,14 @@ export function TheatreCloud({ shows, onShowPress }: TheatreCloudProps) {
 
   if (!shows.length) {
     return (
-      <View style={styles.empty}>
-        <Text style={styles.emptyText}>No shows to display</Text>
+      <View style={[styles.empty, { backgroundColor }]}>
+        <Text style={[styles.emptyText, { color: emptyTextColor }]}>No shows to display</Text>
       </View>
     );
   }
 
   return (
-    <View style={styles.container} onLayout={onLayout}>
+    <View style={[styles.container, { backgroundColor }]} onLayout={onLayout}>
       {size.width > 0 && size.height > 0 && (
         <GestureDetector gesture={gesture}>
           <Canvas style={StyleSheet.absoluteFill}>

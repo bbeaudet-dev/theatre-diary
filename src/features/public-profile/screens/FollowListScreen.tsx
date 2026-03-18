@@ -5,6 +5,8 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { api } from "@/convex/_generated/api";
 import { styles } from "@/features/public-profile/styles";
+import { Colors } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
 
 type FollowKind = "followers" | "following";
 
@@ -30,23 +32,35 @@ export default function FollowListScreen() {
   const rows = kind === "followers" ? (followers ?? []) : (following ?? []);
   const title = kind === "followers" ? "Followers" : "Following";
 
+  const colorScheme = useColorScheme();
+  const theme = colorScheme ?? "light";
+  const backgroundColor = Colors[theme].background;
+  const primaryTextColor = Colors[theme].text;
+  const mutedTextColor = Colors[theme].mutedText;
+  const surfaceColor = Colors[theme].surfaceElevated;
+  const borderColor = Colors[theme].border;
+
   return (
-    <SafeAreaView style={styles.container} edges={["bottom"]}>
+    <SafeAreaView style={[styles.container, { backgroundColor }]} edges={["bottom"]}>
       <Stack.Screen
         options={{ headerShown: true, title, headerBackButtonDisplayMode: "minimal" }}
       />
       <ScrollView contentContainerStyle={styles.content}>
         {(profile === undefined ||
           (kind === "followers" ? followers === undefined : following === undefined)) && (
-          <Text style={styles.loading}>Loading {title.toLowerCase()}...</Text>
+          <Text style={[styles.loading, { color: mutedTextColor }]}>
+            Loading {title.toLowerCase()}...
+          </Text>
         )}
         {!profile ? null : rows.length === 0 ? (
-          <Text style={styles.loading}>No {title.toLowerCase()} yet.</Text>
+          <Text style={[styles.loading, { color: mutedTextColor }]}>
+            No {title.toLowerCase()} yet.
+          </Text>
         ) : (
           rows.map((row) => (
             <Pressable
               key={row._id}
-              style={styles.listRow}
+              style={[styles.listRow, { backgroundColor: surfaceColor, borderColor }]}
               onPress={() =>
                 router.push({
                   pathname: "/user/[username]",
@@ -54,8 +68,12 @@ export default function FollowListScreen() {
                 })
               }
             >
-              <Text style={styles.rowTitle}>{row.name?.trim() || row.username}</Text>
-              <Text style={styles.rowSubtitle}>@{row.username}</Text>
+              <Text style={[styles.rowTitle, { color: primaryTextColor }]}>
+                {row.name?.trim() || row.username}
+              </Text>
+              <Text style={[styles.rowSubtitle, { color: mutedTextColor }]}>
+                @{row.username}
+              </Text>
             </Pressable>
           ))
         )}

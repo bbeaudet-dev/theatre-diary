@@ -14,6 +14,8 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { Colors } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
 
 const SYSTEM_LIST_INFO: Record<string, string> = {
   seen:
@@ -119,8 +121,11 @@ export default function ListDetailScreen() {
     }
   };
 
+  const theme = useColorScheme() ?? "light";
+  const c = Colors[theme];
+
   return (
-    <SafeAreaView style={styles.container} edges={["bottom"]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: c.background }]} edges={["bottom"]}>
       <Stack.Screen
         options={{
           title,
@@ -129,20 +134,20 @@ export default function ListDetailScreen() {
         }}
       />
 
-      <View style={styles.headerRow}>
-        <Text style={styles.countText}>{count} shows</Text>
+      <View style={[styles.headerRow, { borderBottomColor: c.border }]}>
+        <Text style={[styles.countText, { color: c.mutedText }]}>{count} shows</Text>
         {isSystemList ? (
           <Pressable style={styles.infoButton} onPress={() => setShowInfo((prev) => !prev)}>
-            <IconSymbol size={14} name="info.circle" color="#2c67b8" />
-            <Text style={styles.infoButtonText}>What is this list?</Text>
+            <IconSymbol size={14} name="info.circle" color={c.accent} />
+            <Text style={[styles.infoButtonText, { color: c.accent }]}>What is this list?</Text>
           </Pressable>
         ) : (
           <View />
         )}
       </View>
       {showInfo && isSystemList ? (
-        <View style={styles.infoCard}>
-          <Text style={styles.infoText}>{infoText}</Text>
+        <View style={[styles.infoCard, { backgroundColor: c.surface, borderColor: c.border }]}>
+          <Text style={[styles.infoText, { color: c.mutedText }]}>{infoText}</Text>
         </View>
       ) : null}
 
@@ -151,7 +156,10 @@ export default function ListDetailScreen() {
           {isEditingDescription ? (
             <>
               <TextInput
-                style={styles.descriptionInput}
+                style={[
+                  styles.descriptionInput,
+                  { backgroundColor: c.surface, borderColor: c.border, color: c.text },
+                ]}
                 value={descriptionDraft}
                 onChangeText={setDescriptionDraft}
                 placeholder="Add a short description..."
@@ -162,20 +170,27 @@ export default function ListDetailScreen() {
               />
               <View style={styles.descriptionActions}>
                 <Pressable
-                  style={styles.secondaryButton}
+                  style={[
+                    styles.secondaryButton,
+                    { backgroundColor: c.surface, borderColor: c.border },
+                  ]}
                   onPress={() => {
                     setDescriptionDraft(regularList.description ?? "");
                     setIsEditingDescription(false);
                   }}
                 >
-                  <Text style={styles.secondaryButtonText}>Cancel</Text>
+                  <Text style={[styles.secondaryButtonText, { color: c.text }]}>Cancel</Text>
                 </Pressable>
                 <Pressable
-                  style={[styles.saveDescriptionButton, isSavingDescription && styles.disabledButton]}
+                  style={[
+                    styles.saveDescriptionButton,
+                    { backgroundColor: c.accent },
+                    isSavingDescription && styles.disabledButton,
+                  ]}
                   onPress={saveDescription}
                   disabled={isSavingDescription}
                 >
-                  <Text style={styles.saveDescriptionText}>
+                  <Text style={[styles.saveDescriptionText, { color: "#fff" }]}>
                     {isSavingDescription ? "Saving..." : "Save"}
                   </Text>
                 </Pressable>
@@ -183,14 +198,20 @@ export default function ListDetailScreen() {
             </>
           ) : (
             <View style={styles.descriptionPreviewRow}>
-              <Text style={styles.descriptionPreviewText} numberOfLines={2}>
+              <Text
+                style={[styles.descriptionPreviewText, { color: c.mutedText }]}
+                numberOfLines={2}
+              >
                 {regularList.description?.trim() || "No description yet."}
               </Text>
               <Pressable
-                style={styles.secondaryButton}
+                style={[
+                  styles.secondaryButton,
+                  { backgroundColor: c.surface, borderColor: c.border },
+                ]}
                 onPress={() => setIsEditingDescription(true)}
               >
-                <Text style={styles.secondaryButtonText}>Edit</Text>
+                <Text style={[styles.secondaryButtonText, { color: c.text }]}>Edit</Text>
               </Pressable>
             </View>
           )}
@@ -203,20 +224,25 @@ export default function ListDetailScreen() {
         keyboardDismissMode="on-drag"
       >
         {rows.length === 0 ? (
-          <Text style={styles.emptyText}>No shows in this list yet.</Text>
+          <Text style={[styles.emptyText, { color: c.mutedText }]}>
+            No shows in this list yet.
+          </Text>
         ) : (
           rows.map((show) => (
             <Pressable
               key={show._id}
-              style={styles.row}
+              style={[
+                styles.row,
+                { backgroundColor: c.surfaceElevated, borderColor: c.border },
+              ]}
               onPress={() =>
                 router.push({
                   pathname: "/show/[showId]",
                   params: { showId: String(show._id), name: show.name },
                 })
               }
-            >
-              <Text style={styles.name}>{show.name}</Text>
+              >
+              <Text style={[styles.name, { color: c.text }]}>{show.name}</Text>
             </Pressable>
           ))
         )}
@@ -230,9 +256,9 @@ export default function ListDetailScreen() {
               <IconSymbol
                 size={14}
                 name={showSearchOpen ? "xmark.circle" : "plus.circle"}
-                color="#2c67b8"
+                color={c.accent}
               />
-              <Text style={styles.infoButtonText}>
+              <Text style={[styles.infoButtonText, { color: c.accent }]}>
                 {showSearchOpen ? "Cancel" : "Add show"}
               </Text>
             </Pressable>
@@ -240,15 +266,25 @@ export default function ListDetailScreen() {
             {showSearchOpen && regularList ? (
               <View style={styles.addShowBlock}>
                 <TextInput
-                  style={styles.addShowInput}
+                  style={[
+                    styles.addShowInput,
+                    { backgroundColor: c.surface, borderColor: c.border, color: c.text },
+                  ]}
                   value={showQuery}
                   onChangeText={setShowQuery}
                   placeholder="Search shows to add..."
                   autoCapitalize="words"
                 />
-                <View style={styles.addShowResults}>
+                <View
+                  style={[
+                    styles.addShowResults,
+                    { backgroundColor: c.surface, borderColor: c.border },
+                  ]}
+                >
                   {filteredShowResults.length === 0 ? (
-                    <Text style={styles.noSearchResultsText}>No matches.</Text>
+                    <Text style={[styles.noSearchResultsText, { color: c.mutedText }]}>
+                      No matches.
+                    </Text>
                   ) : (
                     filteredShowResults.map((show) => (
                       <Pressable
@@ -256,8 +292,10 @@ export default function ListDetailScreen() {
                         style={styles.addShowRow}
                         onPress={() => onAddShow(show._id)}
                         disabled={isAddingShow}
-                      >
-                        <Text style={styles.addShowName}>{show.name}</Text>
+                        >
+                        <Text style={[styles.addShowName, { color: c.text }]}>
+                          {show.name}
+                        </Text>
                       </Pressable>
                     ))
                   )}
@@ -274,7 +312,6 @@ export default function ListDetailScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fff",
   },
   headerRow: {
     flexDirection: "row",
@@ -292,7 +329,6 @@ const styles = StyleSheet.create({
   },
   infoButtonText: {
     fontSize: 13,
-    color: "#2c67b8",
     fontWeight: "600",
   },
   infoCard: {
@@ -300,13 +336,10 @@ const styles = StyleSheet.create({
     marginTop: 10,
     borderRadius: 10,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: "#c6dcff",
-    backgroundColor: "#eef5ff",
     padding: 10,
   },
   infoText: {
     fontSize: 13,
-    color: "#34507a",
     lineHeight: 18,
   },
   descriptionBlock: {
@@ -317,8 +350,6 @@ const styles = StyleSheet.create({
   descriptionInput: {
     borderRadius: 10,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: "#ddd",
-    backgroundColor: "#fff",
     paddingHorizontal: 12,
     paddingVertical: 8,
     fontSize: 14,
@@ -338,29 +369,23 @@ const styles = StyleSheet.create({
   descriptionPreviewText: {
     flex: 1,
     fontSize: 13,
-    color: "#666",
   },
   secondaryButton: {
     borderRadius: 8,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: "#cfcfcf",
     paddingHorizontal: 10,
     paddingVertical: 6,
-    backgroundColor: "#fff",
   },
   secondaryButtonText: {
-    color: "#333",
     fontSize: 12,
     fontWeight: "700",
   },
   saveDescriptionButton: {
     borderRadius: 8,
-    backgroundColor: "#222",
     paddingHorizontal: 12,
     paddingVertical: 8,
   },
   saveDescriptionText: {
-    color: "#fff",
     fontWeight: "700",
     fontSize: 12,
   },
@@ -369,7 +394,6 @@ const styles = StyleSheet.create({
   },
   countText: {
     fontSize: 13,
-    color: "#777",
     fontWeight: "600",
   },
   content: {
@@ -379,7 +403,6 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 15,
-    color: "#8a8a8a",
   },
   row: {
     borderRadius: 10,
@@ -387,11 +410,9 @@ const styles = StyleSheet.create({
     borderColor: "#ddd",
     paddingHorizontal: 12,
     paddingVertical: 10,
-    backgroundColor: "#fff",
   },
   name: {
     fontSize: 16,
-    color: "#222",
     fontWeight: "600",
   },
   addShowBlock: {
@@ -410,8 +431,6 @@ const styles = StyleSheet.create({
   addShowInput: {
     borderRadius: 10,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: "#ddd",
-    backgroundColor: "#fff",
     paddingHorizontal: 12,
     paddingVertical: 10,
     fontSize: 14,
@@ -421,7 +440,6 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: "#ddd",
     overflow: "hidden",
-    backgroundColor: "#fff",
   },
   addShowRow: {
     paddingHorizontal: 12,
@@ -431,12 +449,10 @@ const styles = StyleSheet.create({
   },
   addShowName: {
     fontSize: 14,
-    color: "#222",
     fontWeight: "500",
   },
   noSearchResultsText: {
     fontSize: 13,
-    color: "#999",
     paddingHorizontal: 12,
     paddingVertical: 10,
   },

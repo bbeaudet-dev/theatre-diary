@@ -1,5 +1,8 @@
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
+import { Colors } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
+
 interface ActionsMenuProps {
   visible: boolean;
   onClose: () => void;
@@ -15,16 +18,29 @@ export function ActionsMenu({
 }: ActionsMenuProps) {
   if (!visible) return null;
 
+  const colorScheme = useColorScheme();
+  const theme = colorScheme ?? "light";
+  const sheetBackground = Colors[theme].background;
+  const optionBackground = theme === "dark" ? "#202024" : "#f8f8ff";
+  const optionBorder = theme === "dark" ? "#333" : "#e1e1e1";
+  const optionTextColor = Colors[theme].text;
+
   return (
     <View style={styles.overlay} pointerEvents="box-none">
       <Pressable style={styles.backdrop} onPress={onClose} />
       <View style={styles.menuAnchor} pointerEvents="box-none">
-        <View style={styles.sheet}>
-          <Pressable style={styles.optionButton} onPress={onAddVisit}>
-            <Text style={styles.optionTitle}>Add a Visit</Text>
+        <View style={[styles.sheet, { backgroundColor: sheetBackground }]}>
+          <Pressable
+            style={[styles.optionButton, { backgroundColor: optionBackground, borderColor: optionBorder }]}
+            onPress={onAddVisit}
+          >
+            <Text style={[styles.optionTitle, { color: optionTextColor }]}>Add a Visit</Text>
           </Pressable>
-          <Pressable style={styles.optionButton} onPress={onCreateList}>
-            <Text style={styles.optionTitle}>Create a List</Text>
+          <Pressable
+            style={[styles.optionButton, { backgroundColor: optionBackground, borderColor: optionBorder }]}
+            onPress={onCreateList}
+          >
+            <Text style={[styles.optionTitle, { color: optionTextColor }]}>Create a List</Text>
           </Pressable>
         </View>
       </View>

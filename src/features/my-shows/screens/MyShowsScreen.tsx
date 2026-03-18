@@ -5,6 +5,7 @@ import { StyleSheet, Text } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { DiaryView } from "@/components/diary-view";
+import { Colors } from "@/constants/theme";
 import type { Id } from "@/convex/_generated/dataModel";
 import { MyShowsCloudView } from "@/features/my-shows/components/MyShowsCloudView";
 import { MyShowsHeader } from "@/features/my-shows/components/MyShowsHeader";
@@ -12,8 +13,12 @@ import { MyShowsListView } from "@/features/my-shows/components/MyShowsListView"
 import { useMyShowsData } from "@/features/my-shows/hooks/useMyShowsData";
 import { useRankedListItems } from "@/features/my-shows/hooks/useRankedListItems";
 import type { RankingTier, ViewMode } from "@/features/my-shows/types";
+import { useColorScheme } from "@/hooks/use-color-scheme";
 
-const TIER_HEADERS: Record<RankingTier, { label: string; color: string; textColor: string }> = {
+const TIER_HEADERS: Record<
+  RankingTier,
+  { label: string; color: string; textColor: string }
+> = {
   loved: { label: "Loved It", color: "#ef5da8", textColor: "#111" },
   liked: { label: "Liked It", color: "#2f8f46", textColor: "#fff" },
   okay: { label: "It Was Okay", color: "#e9c84f", textColor: "#111" },
@@ -38,8 +43,12 @@ export default function MyShowsScreen() {
   const router = useRouter();
   const tabBarHeight = useBottomTabBarHeight();
   const [viewMode, setViewMode] = useState<ViewMode>("list");
-  const [expandedShowId, setExpandedShowId] = useState<Id<"shows"> | null>(null);
-  const [selectedShowId, setSelectedShowId] = useState<Id<"shows"> | null>(null);
+  const [expandedShowId, setExpandedShowId] = useState<Id<"shows"> | null>(
+    null,
+  );
+  const [selectedShowId, setSelectedShowId] = useState<Id<"shows"> | null>(
+    null,
+  );
   const {
     displayShows,
     showsForDisplay,
@@ -58,14 +67,24 @@ export default function MyShowsScreen() {
     getShowTier,
   });
 
+  const colorScheme = useColorScheme();
+  const theme = colorScheme ?? "light";
+  const backgroundColor = Colors[theme].background;
+  const loadingTextColor = Colors[theme].text;
+
   return (
-    <SafeAreaView style={styles.container} edges={["top"]}>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor }]}
+      edges={["top"]}
+    >
       <MyShowsHeader viewMode={viewMode} onChangeViewMode={setViewMode} />
 
       {viewMode === "diary" ? (
         <DiaryView />
       ) : listItems === undefined ? (
-        <Text style={styles.loading}>Loading...</Text>
+        <Text style={[styles.loading, { color: loadingTextColor }]}>
+          Loading...
+        </Text>
       ) : viewMode === "list" ? (
         <MyShowsListView
           listItems={listItems}
@@ -109,7 +128,6 @@ const styles = StyleSheet.create({
   },
   loading: {
     fontSize: 16,
-    color: "#666",
     padding: 16,
   },
 });

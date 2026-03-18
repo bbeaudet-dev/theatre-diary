@@ -12,6 +12,8 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { Colors } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
 import { getBottomInsertionIndexForTier } from "@/features/add-visit/logic/ranking";
 import { getTodayIsoDate } from "@/features/add-visit/logic/form";
 import { useAddVisitData } from "@/features/add-visit/hooks/useAddVisitData";
@@ -186,6 +188,11 @@ export default function AddVisitScreen() {
   });
 
   const allShowsLoaded = allShows !== undefined;
+  const theme = useColorScheme() ?? "light";
+  const bg = Colors[theme].background;
+  const text = Colors[theme].text;
+  const accent = Colors[theme].accent;
+  const border = Colors[theme].border;
 
   const searchableResults = useMemo(
     () =>
@@ -198,15 +205,15 @@ export default function AddVisitScreen() {
   );
 
   return (
-    <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: bg }]} edges={["top", "bottom"]}>
       <KeyboardAvoidingView
         style={styles.flex}
         behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
-        <View style={styles.header}>
-          <Text style={styles.title}>Add Visit</Text>
+        <View style={[styles.header, { borderBottomColor: border }]}>
+          <Text style={[styles.title, { color: text }]}>Add Visit</Text>
           <Pressable onPress={() => router.back()} hitSlop={10}>
-            <Text style={styles.closeText}>Close</Text>
+            <Text style={[styles.closeText, { color: accent }]}>Close</Text>
           </Pressable>
         </View>
         <ScrollView

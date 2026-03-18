@@ -6,6 +6,8 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
 import { DetailCard, detailCardStyles } from "@/components/detail-card";
+import { Colors } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
 
 export default function ShowDetailScreen() {
   const router = useRouter();
@@ -20,26 +22,34 @@ export default function ShowDetailScreen() {
   const visits = useQuery(api.visits.listByShow, showId ? { showId } : "skip");
   const productions = useQuery(api.productions.listByShow, showId ? { showId } : "skip");
 
+  const colorScheme = useColorScheme();
+  const theme = colorScheme ?? "light";
+  const backgroundColor = Colors[theme].background;
+  const mutedTextColor = Colors[theme].mutedText;
+  const primaryTextColor = Colors[theme].text;
+  // Use light accent here so the button isn't white-on-white in dark mode.
+  const accentColor = Colors.light.accent;
+
   return (
-    <SafeAreaView style={styles.container} edges={["bottom"]}>
+    <SafeAreaView style={[styles.container, { backgroundColor }]} edges={["bottom"]}>
       <Stack.Screen options={{ title, headerShown: true, headerBackButtonDisplayMode: "minimal" }} />
 
       <ScrollView contentContainerStyle={styles.content}>
         <DetailCard title="Show">
-          <Text style={detailCardStyles.value}>{show?.name ?? "Loading..."}</Text>
-          <Text style={detailCardStyles.subtle}>{show?.type ?? ""}</Text>
+          <Text style={[detailCardStyles.value, { color: primaryTextColor }]}>{show?.name ?? "Loading..."}</Text>
+          <Text style={[detailCardStyles.subtle, { color: mutedTextColor }]}>{show?.type ?? ""}</Text>
         </DetailCard>
 
         <DetailCard title="Your stats">
-          <Text style={detailCardStyles.value}>{visits?.length ?? 0} visits</Text>
-          <Text style={detailCardStyles.subtle}>{productions?.length ?? 0} productions available</Text>
+          <Text style={[detailCardStyles.value, { color: primaryTextColor }]}>{visits?.length ?? 0} visits</Text>
+          <Text style={[detailCardStyles.subtle, { color: mutedTextColor }]}>{productions?.length ?? 0} productions available</Text>
         </DetailCard>
 
         <DetailCard title="Visits">
           {visits === undefined ? (
-            <Text style={detailCardStyles.subtle}>Loading...</Text>
+            <Text style={[detailCardStyles.subtle, { color: mutedTextColor }]}>Loading...</Text>
           ) : visits.length === 0 ? (
-            <Text style={detailCardStyles.subtle}>No visits for this show yet.</Text>
+            <Text style={[detailCardStyles.subtle, { color: mutedTextColor }]}>No visits for this show yet.</Text>
           ) : (
             visits.map((visit) => (
               <Pressable
@@ -52,18 +62,18 @@ export default function ShowDetailScreen() {
                   })
                 }
               >
-                <Text style={styles.visitRowText}>{visit.date}</Text>
-                <Text style={styles.visitRowChevron}>▸</Text>
+                <Text style={[styles.visitRowText, { color: primaryTextColor }]}>{visit.date}</Text>
+                <Text style={[styles.visitRowChevron, { color: mutedTextColor }]}>▸</Text>
               </Pressable>
             ))
           )}
         </DetailCard>
 
         <Pressable
-          style={styles.primaryButton}
+          style={[styles.primaryButton, { backgroundColor: accentColor }]}
           onPress={() => router.push("/add-visit")}
         >
-          <Text style={styles.primaryButtonText}>Add a Visit</Text>
+          <Text style={[styles.primaryButtonText, { color: "#fff" }]}>Add a Visit</Text>
         </Pressable>
       </ScrollView>
     </SafeAreaView>
@@ -71,7 +81,7 @@ export default function ShowDetailScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#fff" },
+  container: { flex: 1 },
   content: { padding: 16, gap: 10, paddingBottom: 32 },
   visitRow: {
     flexDirection: "row",
@@ -83,23 +93,19 @@ const styles = StyleSheet.create({
   },
   visitRowText: {
     fontSize: 14,
-    color: "#333",
     fontWeight: "500",
   },
   visitRowChevron: {
     fontSize: 14,
-    color: "#9a9a9a",
   },
   primaryButton: {
     borderRadius: 10,
-    backgroundColor: "#1f1f1f",
     alignItems: "center",
     justifyContent: "center",
     paddingVertical: 12,
     marginTop: 6,
   },
   primaryButtonText: {
-    color: "#fff",
     fontWeight: "700",
     fontSize: 14,
   },
