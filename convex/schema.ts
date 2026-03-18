@@ -27,7 +27,7 @@ export default defineSchema({
   // e.g. "Hamilton, original Broadway, Richard Rodgers Theatre, Jul 2015 – Jan 2020"
   productions: defineTable({
     showId: v.id("shows"),
-    theatre: v.string(),
+    theatre: v.optional(v.string()),
     city: v.optional(v.string()),
     district: v.union(
       v.literal("broadway"),

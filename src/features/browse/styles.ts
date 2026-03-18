@@ -12,19 +12,72 @@ export const styles = StyleSheet.create({
     fontWeight: "bold",
   },
   searchRow: {
+    flexDirection: "row",
+    alignItems: "center",
     paddingHorizontal: 16,
     paddingVertical: 8,
   },
-  searchInput: {
+  searchInputWrapper: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
     backgroundColor: "#f0f0f0",
     borderRadius: 10,
-    paddingHorizontal: 14,
+    paddingHorizontal: 10,
+  },
+  searchInput: {
+    flex: 1,
+    paddingHorizontal: 4,
     paddingVertical: 10,
     fontSize: 15,
     color: "#111",
   },
+  clearSearchButton: {
+    marginLeft: 6,
+    paddingHorizontal: 4,
+    paddingVertical: 4,
+  },
+  clearSearchText: {
+    fontSize: 16,
+    color: "#777",
+  },
   list: { flex: 1 },
   listContent: { paddingHorizontal: 16, paddingBottom: 32 },
+  filterRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 16,
+    paddingBottom: 4,
+  },
+  filterChips: {
+    flexDirection: "row",
+    gap: 8,
+  },
+  filterChip: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: "#ddd",
+    backgroundColor: "#fff",
+  },
+  filterChipActive: {
+    backgroundColor: "#111",
+    borderColor: "#111",
+  },
+  filterChipText: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#555",
+  },
+  filterChipTextActive: {
+    color: "#fff",
+  },
+  countText: {
+    fontSize: 13,
+    color: "#777",
+  },
   sectionHeader: {
     fontSize: 12,
     fontWeight: "700",
@@ -39,6 +92,18 @@ export const styles = StyleSheet.create({
     fontSize: 15,
     textAlign: "center",
     marginTop: 48,
+  },
+  loadMoreButton: {
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 14,
+    marginTop: 8,
+    marginBottom: 8,
+  },
+  loadMoreText: {
+    fontSize: 15,
+    fontWeight: "600",
+    color: "#2c67b8",
   },
   card: {
     backgroundColor: "#f9f9f9",

@@ -7,12 +7,18 @@ import type { BrowseSection, ProductionWithShow } from "@/features/browse/types"
 
 export function useBrowseData(search: string) {
   const allProductions = useQuery(api.productions.listAll);
+  const allShows = useQuery(api.shows.list);
   const today = new Date().toISOString().split("T")[0];
 
-  const visible = useMemo(() => {
+  const hasTheatreOrLocation = (p: ProductionWithShow) =>
+    Boolean(p.theatre?.trim() || p.city?.trim());
+
+  const visibleProductions = useMemo(() => {
     return ((allProductions ?? []) as ProductionWithShow[]).filter((p) => {
       const status = getProductionStatus(p, today);
       if (status === "closed") return false;
+      // Only show as current/upcoming if we have a theatre and/or location (otherwise treat as not current).
+      if (!hasTheatreOrLocation(p)) return false;
       if (!search.trim()) return true;
       const q = search.toLowerCase();
       return p.show?.name?.toLowerCase().includes(q) || p.theatre?.toLowerCase().includes(q);
@@ -24,22 +30,36 @@ export function useBrowseData(search: string) {
       [
         {
           title: "Now Running",
-          data: visible.filter((p) => getProductionStatus(p, today) === "open"),
+          data: visibleProductions.filter((p) => getProductionStatus(p, today) === "open"),
         },
         {
           title: "In Previews",
-          data: visible.filter((p) => getProductionStatus(p, today) === "in_previews"),
+          data: visibleProductions.filter((p) => getProductionStatus(p, today) === "in_previews"),
         },
         {
           title: "Announced",
-          data: visible.filter((p) => getProductionStatus(p, today) === "announced"),
+          data: visibleProductions.filter((p) => getProductionStatus(p, today) === "announced"),
         },
       ].filter((s) => s.data.length > 0),
-    [today, visible]
+    [today, visibleProductions]
+  );
+
+  const shows = useMemo(
+    () => {
+      if (!allShows) return undefined;
+      const trimmed = search.trim().toLowerCase();
+      const base = [...allShows].sort((a, b) => a.name.localeCompare(b.name));
+      if (!trimmed) return base;
+      return base.filter((show) => show.name.toLowerCase().includes(trimmed));
+    },
+    [allShows, search]
   );
 
   return {
     allProductions,
     sections,
+    shows,
+    currentCount: visibleProductions.length,
+    allCount: allShows?.length ?? 0,
   };
 }
