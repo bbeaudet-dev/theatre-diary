@@ -22,13 +22,20 @@ export default function TabLayout() {
     <>
       <Tabs
         screenOptions={{
-          tabBarActiveTintColor: Colors[colorScheme ?? "light"].tint,
+          tabBarActiveTintColor: Colors[colorScheme ?? "light"].tabIconSelected,
+          tabBarInactiveTintColor: Colors[colorScheme ?? "light"].tabIconDefault,
           headerShown: false,
           tabBarButton: HapticTab,
           tabBarStyle: {
             position: "absolute",
-            backgroundColor: "rgba(255, 255, 255, 0.82)",
-            borderTopColor: "rgba(0, 0, 0, 0.07)",
+            backgroundColor:
+              colorScheme === "dark"
+                ? "rgba(10, 10, 10, 0.9)"
+                : "rgba(255, 255, 255, 0.82)",
+            borderTopColor:
+              colorScheme === "dark"
+                ? "rgba(255, 255, 255, 0.12)"
+                : "rgba(0, 0, 0, 0.07)",
           },
         }}
         screenListeners={{
@@ -70,10 +77,22 @@ export default function TabLayout() {
               <View
                 style={[
                   styles.actionTabButton,
-                  focused && styles.actionTabButtonFocused,
+                  focused && styles.actionTabButton,
                 ]}
               >
-                <Text style={styles.actionTabButtonText}>+</Text>
+                <Text
+                  style={[
+                    styles.actionTabButtonText,
+                    {
+                      color:
+                        colorScheme === "dark"
+                          ? "#ffffff"
+                          : "#1f1f1f",
+                    },
+                  ]}
+                >
+                  +
+                </Text>
               </View>
             ),
           }}
@@ -121,21 +140,14 @@ const styles = StyleSheet.create({
     width: 42,
     height: 42,
     borderRadius: 21,
-    borderWidth: 2,
-    borderColor: "#1f1f1f",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#fff",
     marginTop: -2,
-  },
-  actionTabButtonFocused: {
-    borderColor: "#007AFF",
   },
   actionTabButtonText: {
     fontSize: 24,
     lineHeight: 24,
     marginTop: -1,
     fontWeight: "600",
-    color: "#1f1f1f",
   },
 });

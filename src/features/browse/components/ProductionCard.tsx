@@ -4,6 +4,8 @@ import { formatDate, daysUntil } from "@/features/browse/logic/date";
 import { styles } from "@/features/browse/styles";
 import type { ProductionWithShow } from "@/features/browse/types";
 import { getProductionStatus } from "@/utils/productions";
+import { Colors } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
 
 const STATUS_BADGE: Record<string, { label: string; color: string; bg: string }> = {
   open: { label: "Running", color: "#166534", bg: "#dcfce7" },
@@ -37,14 +39,25 @@ export function ProductionCard({
     return d <= 0 ? "Closing today" : `Closes in ${d}d`;
   })();
 
+  const theme = useColorScheme() ?? "light";
+  const c = Colors[theme];
+
   return (
-    <Pressable style={styles.card} onPress={onPress}>
+    <Pressable
+      style={[
+        styles.card,
+        {
+          backgroundColor: c.surfaceElevated,
+        },
+      ]}
+      onPress={onPress}
+    >
       <View style={styles.cardHeader}>
         <View style={styles.cardTitles}>
-          <Text style={styles.showName} numberOfLines={1}>
+          <Text style={[styles.showName, { color: c.text }]} numberOfLines={1}>
             {show?.name ?? "Unknown Show"}
           </Text>
-          <Text style={styles.theatre} numberOfLines={1}>
+          <Text style={[styles.theatre, { color: c.mutedText }]} numberOfLines={1}>
             {production.theatre}
           </Text>
         </View>
@@ -54,7 +67,9 @@ export function ProductionCard({
       </View>
       {(dateRange || closingWarning) && (
         <View style={styles.cardFooter}>
-          {dateRange && <Text style={styles.dateRange}>{dateRange}</Text>}
+          {dateRange && (
+            <Text style={[styles.dateRange, { color: c.mutedText }]}>{dateRange}</Text>
+          )}
           {closingWarning && (
             <View style={styles.closingPill}>
               <Text style={styles.closingText}>{closingWarning}</Text>

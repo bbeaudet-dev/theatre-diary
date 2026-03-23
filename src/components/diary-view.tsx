@@ -5,6 +5,8 @@ import { useMemo } from "react";
 import { Image, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 
 import { api } from "@/convex/_generated/api";
+import { Colors } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
 
 type VisitWithShow = {
   _id: string;
@@ -69,6 +71,12 @@ export function DiaryView() {
   const tabBarHeight = useBottomTabBarHeight();
   const visits = useQuery(api.visits.listAllWithShows);
 
+  const colorScheme = useColorScheme();
+  const theme = colorScheme ?? "light";
+  const backgroundColor = Colors[theme].background;
+  const primaryTextColor = Colors[theme].text;
+  const mutedTextColor = theme === "dark" ? "#A0A4AA" : "#666";
+
   const groups = useMemo(() => {
     if (!visits) return [];
     const now = new Date();
@@ -91,18 +99,20 @@ export function DiaryView() {
 
   if (visits === undefined) {
     return (
-      <View style={styles.centered}>
-        <Text style={styles.loadingText}>Loading...</Text>
+      <View style={[styles.centered, { backgroundColor }]}>
+        <Text style={[styles.loadingText, { color: primaryTextColor }]}>Loading...</Text>
       </View>
     );
   }
 
   if (visits.length === 0) {
     return (
-      <View style={styles.centered}>
+      <View style={[styles.centered, { backgroundColor }]}>
         <Text style={styles.emptyEmoji}>📖</Text>
-        <Text style={styles.emptyTitle}>Your diary is empty</Text>
-        <Text style={styles.emptySubtitle}>
+        <Text style={[styles.emptyTitle, { color: primaryTextColor }]}>
+          Your diary is empty
+        </Text>
+        <Text style={[styles.emptySubtitle, { color: mutedTextColor }]}>
           Log visits to your shows to see them here
         </Text>
       </View>
@@ -111,12 +121,12 @@ export function DiaryView() {
 
   return (
     <ScrollView
-      style={styles.container}
+      style={[styles.container, { backgroundColor }]}
       contentContainerStyle={[styles.content, { paddingBottom: tabBarHeight + 24 }]}
     >
       {groups.map((group) => (
         <View key={group.label} style={styles.section}>
-          <Text style={styles.sectionLabel}>{group.label}</Text>
+          <Text style={[styles.sectionLabel, { color: primaryTextColor }]}>{group.label}</Text>
           <View style={styles.grid}>
             {group.visits.map((visit) => (
               <DiaryCard
@@ -196,7 +206,7 @@ const cardStyles = StyleSheet.create({
   card: {
     width: `${(100 - (NUM_COLUMNS - 1) * 2.2) / NUM_COLUMNS}%` as any,
     borderRadius: 8,
-    backgroundColor: "#f5f5f5",
+    backgroundColor: "#e0e0e0",
     overflow: "hidden",
   },
   image: {

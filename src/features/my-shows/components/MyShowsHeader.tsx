@@ -1,5 +1,7 @@
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
+import { Colors } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
 import type { ViewMode } from "@/features/my-shows/types";
 
 const VIEW_MODES: ViewMode[] = ["list", "cloud", "diary"];
@@ -11,14 +13,26 @@ export function MyShowsHeader({
   viewMode: ViewMode;
   onChangeViewMode: (mode: ViewMode) => void;
 }) {
+  const colorScheme = useColorScheme();
+  const theme = colorScheme ?? "light";
+  const titleColor = Colors[theme].text;
+  const toggleBackground = theme === "dark" ? "#1f1f22" : "#f0f0f0";
+  const toggleActiveBackground = theme === "dark" ? "#fff" : "#fff";
+  const toggleTextColor = theme === "dark" ? "#b5b5b8" : "#888";
+  const toggleTextActiveColor = theme === "dark" ? "#111" : "#333";
+
   return (
     <View style={styles.header}>
-      <Text style={styles.title}>My Shows</Text>
+      <Text style={[styles.title, { color: titleColor }]}>My Shows</Text>
       <View style={styles.toggle}>
         {VIEW_MODES.map((mode) => (
           <Pressable
             key={mode}
-            style={[styles.toggleButton, viewMode === mode && styles.toggleButtonActive]}
+            style={[
+              styles.toggleButton,
+              { backgroundColor: toggleBackground },
+              viewMode === mode && [styles.toggleButtonActive, { backgroundColor: toggleActiveBackground }],
+            ]}
             onPress={() => onChangeViewMode(mode)}
           >
             <Text style={[styles.toggleText, viewMode === mode && styles.toggleTextActive]}>
@@ -46,7 +60,6 @@ const styles = StyleSheet.create({
   },
   toggle: {
     flexDirection: "row",
-    backgroundColor: "#f0f0f0",
     borderRadius: 8,
     padding: 2,
   },

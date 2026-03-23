@@ -5,6 +5,8 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { api } from "@/convex/_generated/api";
 import { styles } from "@/features/public-profile/styles";
+import { Colors } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
 
 export default function PublicProfileScreen() {
   const router = useRouter();
@@ -32,8 +34,17 @@ export default function PublicProfileScreen() {
   const displayName = profile?.name?.trim() || profile?.username || "Profile";
   const isOwnProfile = profile ? currentUserId === profile._id : false;
 
+  const colorScheme = useColorScheme();
+  const theme = colorScheme ?? "light";
+  const backgroundColor = Colors[theme].background;
+  const primaryTextColor = Colors[theme].text;
+  const mutedTextColor = Colors[theme].mutedText;
+  const surfaceColor = Colors[theme].surfaceElevated;
+  const borderColor = Colors[theme].border;
+  const accentColor = Colors[theme].accent;
+
   return (
-    <SafeAreaView style={styles.container} edges={["bottom"]}>
+    <SafeAreaView style={[styles.container, { backgroundColor }]} edges={["bottom"]}>
       <Stack.Screen
         options={{
           headerShown: true,
@@ -42,31 +53,57 @@ export default function PublicProfileScreen() {
         }}
       />
       <ScrollView contentContainerStyle={styles.content}>
-        {profile === undefined ? <Text style={styles.loading}>Loading profile...</Text> : null}
-        {profile === null ? <Text style={styles.loading}>User not found.</Text> : null}
+        {profile === undefined ? (
+          <Text style={[styles.loading, { color: mutedTextColor }]}>Loading profile...</Text>
+        ) : null}
+        {profile === null ? (
+          <Text style={[styles.loading, { color: mutedTextColor }]}>User not found.</Text>
+        ) : null}
         {profile ? (
-          <View style={styles.card}>
+          <View style={[styles.card, { backgroundColor: surfaceColor, borderColor }]}>
             <View style={styles.nameRow}>
-              <Text style={styles.displayName}>{displayName}</Text>
+              <Text style={[styles.displayName, { color: primaryTextColor }]}>
+                {displayName}
+              </Text>
               {!isOwnProfile ? (
                 <Pressable
-                  style={profile.viewerFollows ? styles.inlineSecondaryButton : styles.inlineFollowButton}
+                  style={[
+                    profile.viewerFollows ? styles.inlineSecondaryButton : styles.inlineFollowButton,
+                    profile.viewerFollows
+                      ? { backgroundColor: "transparent", borderColor }
+                      : { backgroundColor: accentColor },
+                  ]}
                   onPress={handleFollow}
                 >
                   <Text
-                    style={profile.viewerFollows ? styles.inlineSecondaryButtonText : styles.inlineFollowButtonText}
+                    style={[
+                      profile.viewerFollows
+                        ? styles.inlineSecondaryButtonText
+                        : styles.inlineFollowButtonText,
+                      profile.viewerFollows
+                        ? { color: primaryTextColor }
+                        : { color: "#fff" },
+                    ]}
                   >
                     {profile.viewerFollows ? "Unfollow" : "Follow"}
                   </Text>
                 </Pressable>
               ) : null}
             </View>
-            <Text style={styles.username}>@{profile.username}</Text>
-            {profile.bio ? <Text style={styles.bio}>{profile.bio}</Text> : null}
-            {profile.location ? <Text style={styles.location}>{profile.location}</Text> : null}
+            <Text style={[styles.username, { color: mutedTextColor }]}>
+              @{profile.username}
+            </Text>
+            {profile.bio ? (
+              <Text style={[styles.bio, { color: primaryTextColor }]}>{profile.bio}</Text>
+            ) : null}
+            {profile.location ? (
+              <Text style={[styles.location, { color: mutedTextColor }]}>
+                {profile.location}
+              </Text>
+            ) : null}
             <View style={styles.countRow}>
               <Pressable
-                style={styles.countButton}
+                style={[styles.countButton, { backgroundColor: Colors[theme].surface, borderColor }]}
                 onPress={() =>
                   router.push({
                     pathname: "/user/[username]/[kind]",
@@ -74,10 +111,12 @@ export default function PublicProfileScreen() {
                   })
                 }
               >
-                <Text style={styles.countText}>{profile.followerCount} followers</Text>
+                <Text style={[styles.countText, { color: primaryTextColor }]}>
+                  {profile.followerCount} followers
+                </Text>
               </Pressable>
               <Pressable
-                style={styles.countButton}
+                style={[styles.countButton, { backgroundColor: Colors[theme].surface, borderColor }]}
                 onPress={() =>
                   router.push({
                     pathname: "/user/[username]/[kind]",
@@ -85,7 +124,9 @@ export default function PublicProfileScreen() {
                   })
                 }
               >
-                <Text style={styles.countText}>{profile.followingCount} following</Text>
+                <Text style={[styles.countText, { color: primaryTextColor }]}>
+                  {profile.followingCount} following
+                </Text>
               </Pressable>
             </View>
           </View>

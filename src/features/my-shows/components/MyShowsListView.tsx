@@ -6,6 +6,8 @@ import DraggableFlatList, {
 } from "react-native-draggable-flatlist";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
+import { Colors } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
 import { ShowRowAccordion, type RankedShow } from "@/components/show-row-accordion";
 import type { Id } from "@/convex/_generated/dataModel";
 import type { LineMeta, ListItem, RankingTier, TierHeaderMeta } from "@/features/my-shows/types";
@@ -106,6 +108,10 @@ export function MyShowsListView({
     ]
   );
 
+  const colorScheme = useColorScheme();
+  const theme = colorScheme ?? "light";
+  const emptyTextColor = theme === "dark" ? "#A0A4AA" : "#999";
+
   return (
     <View style={styles.listWrapper}>
       <DraggableFlatList
@@ -116,7 +122,7 @@ export function MyShowsListView({
         keyboardShouldPersistTaps="handled"
         ListEmptyComponent={
           <View style={styles.empty}>
-            <Text style={styles.emptyText}>No shows ranked yet.</Text>
+            <Text style={[styles.emptyText, { color: emptyTextColor }]}>No shows ranked yet.</Text>
           </View>
         }
         contentContainerStyle={[styles.listContent, { paddingBottom: tabBarHeight + 24 }]}
@@ -132,7 +138,6 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 16,
-    color: "#999",
   },
   listWrapper: {
     flex: 1,

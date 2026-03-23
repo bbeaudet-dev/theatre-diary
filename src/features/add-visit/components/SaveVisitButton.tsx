@@ -1,5 +1,7 @@
 import { Pressable, Text } from "react-native";
 
+import { Colors } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
 import { styles } from "@/features/add-visit/styles";
 
 export function SaveVisitButton({
@@ -9,9 +11,11 @@ export function SaveVisitButton({
   isSaving: boolean;
   onSave: () => void;
 }) {
+  const theme = useColorScheme() ?? "light";
+  const accent = Colors.light.accent;
   return (
     <Pressable
-      style={[styles.saveButton, isSaving && styles.saveButtonDisabled]}
+      style={[styles.saveButton, { backgroundColor: accent }, isSaving && styles.saveButtonDisabled]}
       onPress={onSave}
       disabled={isSaving}
     >

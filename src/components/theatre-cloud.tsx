@@ -1,16 +1,25 @@
+import { Colors } from "@/constants/theme";
+import type { Id } from "@/convex/_generated/dataModel";
+import { useColorScheme } from "@/hooks/use-color-scheme";
 import {
   Canvas,
-  Image as SkiaImage,
   Group,
+  matchFont,
   RoundedRect,
+  Image as SkiaImage,
   Text as SkiaText,
   useImage,
-  matchFont,
 } from "@shopify/react-native-skia";
-import { Gesture, GestureDetector } from "react-native-gesture-handler";
-import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useReducer,
+  useRef,
+  useState,
+} from "react";
 import { StyleSheet, Text, View, type LayoutChangeEvent } from "react-native";
-import type { Id } from "@/convex/_generated/dataModel";
+import { Gesture, GestureDetector } from "react-native-gesture-handler";
 
 type ShowType = "musical" | "play" | "opera" | "dance" | "other";
 
@@ -60,7 +69,7 @@ function overlaps(
   x: number,
   y: number,
   w: number,
-  h: number
+  h: number,
 ): boolean {
   for (const p of placed) {
     if (
@@ -81,7 +90,7 @@ function overlapsExcluding(
   x: number,
   y: number,
   w: number,
-  h: number
+  h: number,
 ): boolean {
   for (let i = 0; i < placed.length; i++) {
     if (i === skipIdx) continue;
@@ -198,28 +207,14 @@ function computeLayout(shows: CloudShow[]): Placement[] {
       moved = false;
       if (
         stepX !== 0 &&
-        !overlapsExcluding(
-          placed,
-          i,
-          p.x + stepX,
-          p.y,
-          p.width,
-          p.height
-        )
+        !overlapsExcluding(placed, i, p.x + stepX, p.y, p.width, p.height)
       ) {
         p.x += stepX;
         moved = true;
       }
       if (
         stepY !== 0 &&
-        !overlapsExcluding(
-          placed,
-          i,
-          p.x,
-          p.y + stepY,
-          p.width,
-          p.height
-        )
+        !overlapsExcluding(placed, i, p.x, p.y + stepY, p.width, p.height)
       ) {
         p.y += stepY;
         moved = true;
@@ -357,6 +352,11 @@ export function TheatreCloud({ shows, onShowPress }: TheatreCloudProps) {
 
   const placements = useMemo(() => computeLayout(shows), [shows]);
 
+  const colorScheme = useColorScheme();
+  const theme = colorScheme ?? "light";
+  const backgroundColor = Colors[theme].background;
+  const emptyTextColor = Colors[theme].text;
+
   // Float animation — each item wanders around its home position
   const animTimeRef = useRef(0);
   const [, forceUpdate] = useReducer((n: number) => n + 1, 0);
@@ -426,7 +426,7 @@ export function TheatreCloud({ shows, onShowPress }: TheatreCloudProps) {
           offsetRef.current = next;
           setOffset(next);
         }),
-    []
+    [],
   );
 
   const tap = useMemo(
@@ -453,41 +453,35 @@ export function TheatreCloud({ shows, onShowPress }: TheatreCloudProps) {
             }
           }
         }),
-    [placements, onShowPress]
+    [placements, onShowPress],
   );
 
-  const gesture = useMemo(
-    () => Gesture.Simultaneous(tap, pan),
-    [tap, pan]
-  );
+  const gesture = useMemo(() => Gesture.Simultaneous(tap, pan), [tap, pan]);
 
   const onLayout = useCallback((e: LayoutChangeEvent) => {
     const { width, height } = e.nativeEvent.layout;
     setSize((prev) =>
-      prev.width === width && prev.height === height
-        ? prev
-        : { width, height }
+      prev.width === width && prev.height === height ? prev : { width, height },
     );
   }, []);
 
   if (!shows.length) {
     return (
-      <View style={styles.empty}>
-        <Text style={styles.emptyText}>No shows to display</Text>
+      <View style={[styles.empty, { backgroundColor }]}>
+        <Text style={[styles.emptyText, { color: emptyTextColor }]}>
+          No shows to display
+        </Text>
       </View>
     );
   }
 
   return (
-    <View style={styles.container} onLayout={onLayout}>
+    <View style={[styles.container, { backgroundColor }]} onLayout={onLayout}>
       {size.width > 0 && size.height > 0 && (
         <GestureDetector gesture={gesture}>
           <Canvas style={StyleSheet.absoluteFill}>
             <Group
-              transform={[
-                { translateX: offset.x },
-                { translateY: offset.y },
-              ]}
+              transform={[{ translateX: offset.x }, { translateY: offset.y }]}
             >
               {[...displayPlacements].reverse().map((p) => (
                 <PlaybillItem key={p.showId} placement={p} />

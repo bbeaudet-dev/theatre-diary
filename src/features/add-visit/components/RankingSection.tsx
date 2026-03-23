@@ -1,5 +1,7 @@
 import { ActivityIndicator, Image, Pressable, Text, View } from "react-native";
 
+import { Colors } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
 import { styles } from "@/features/add-visit/styles";
 import { TIER_ORDER } from "@/features/add-visit/logic/ranking";
 import type { RankedShowForRanking, RankingTier } from "@/features/add-visit/types";
@@ -54,26 +56,34 @@ export function RankingSection({
   predictedResultIndex: number | null;
   rankedShowsForRanking: RankedShowForRanking[];
 }) {
+  const theme = useColorScheme() ?? "light";
+  const c = Colors[theme];
   return (
     <View style={styles.section}>
-      <Text style={styles.sectionTitle}>How was it?</Text>
+      <Text style={[styles.sectionTitle, { color: c.text }]}>How was it?</Text>
       {showHasRanking && (
         <Pressable
           style={styles.keepCurrentRow}
           onPress={() => setKeepCurrentRanking(!keepCurrentRanking)}
         >
-          <View style={[styles.checkbox, keepCurrentRanking && styles.checkboxChecked]}>
+          <View
+            style={[
+              styles.checkbox,
+              { borderColor: c.mutedText, backgroundColor: c.surface },
+              keepCurrentRanking && [styles.checkboxChecked, { backgroundColor: c.accent, borderColor: c.accent }],
+            ]}
+          >
             {keepCurrentRanking && <Text style={styles.checkmark}>✓</Text>}
           </View>
-          <Text style={styles.keepCurrentText}>Keep Current Ranking</Text>
+          <Text style={[styles.keepCurrentText, { color: c.text }]}>Keep Current Ranking</Text>
         </Pressable>
       )}
       {showHasVisit && (
-        <Text style={styles.helperText}>You already have at least one visit saved for this show.</Text>
+        <Text style={[styles.helperText, { color: c.mutedText }]}>You already have at least one visit saved for this show.</Text>
       )}
 
       {shouldShowRankingSection && (
-        <View style={styles.rankingCard}>
+        <View style={[styles.rankingCard, { backgroundColor: c.surface, borderColor: c.border }]}>
           {selectedTier ? (
             <View style={styles.selectedTierRow}>
               <View
@@ -95,11 +105,11 @@ export function RankingSection({
                 </Text>
               </View>
               <Pressable onPress={onChangeTier}>
-                <Text style={styles.changeShowText}>Change</Text>
+                <Text style={[styles.changeShowText, { color: c.accent }]}>Change</Text>
               </Pressable>
             </View>
           ) : isRankingsLoading ? (
-            <ActivityIndicator size="small" color="#999" />
+            <ActivityIndicator size="small" color={c.mutedText} />
           ) : (
             <View style={styles.tierGrid}>
               {TIER_ORDER.map((tier) => (
@@ -126,35 +136,35 @@ export function RankingSection({
 
           {selectedTier && rankingPhase === "comparison" && comparisonTarget && (
             <View style={styles.comparisonBlock}>
-              <Text style={styles.placeholderTitle}>Which show do you prefer?</Text>
+              <Text style={[styles.placeholderTitle, { color: c.text }]}>Which show do you prefer?</Text>
               <View style={styles.comparisonCards}>
                 <Pressable
-                  style={styles.playbillCard}
+                  style={[styles.playbillCard, { backgroundColor: c.surfaceElevated, borderColor: c.border }]}
                   onPress={() => onComparisonAnswer(true)}
                 >
-                  <View style={styles.playbillFallback}>
-                    <Text style={styles.playbillFallbackText}>{showNameForHeader}</Text>
+                  <View style={[styles.playbillFallback, { backgroundColor: c.surface }]}>
+                    <Text style={[styles.playbillFallbackText, { color: c.mutedText }]}>{showNameForHeader}</Text>
                   </View>
-                  <Text style={styles.playbillName} numberOfLines={2}>
+                  <Text style={[styles.playbillName, { color: c.text }]} numberOfLines={2}>
                     {showNameForHeader}
                   </Text>
                 </Pressable>
 
                 <Pressable
-                  style={styles.playbillCard}
+                  style={[styles.playbillCard, { backgroundColor: c.surfaceElevated, borderColor: c.border }]}
                   onPress={() => onComparisonAnswer(false)}
                 >
                   {comparisonTarget.images[0] ? (
                     <Image
                       source={{ uri: comparisonTarget.images[0] }}
-                      style={styles.playbillImage}
+                      style={[styles.playbillImage, { backgroundColor: c.surface }]}
                     />
                   ) : (
-                    <View style={styles.playbillFallback}>
-                      <Text style={styles.playbillFallbackText}>{comparisonTarget.name}</Text>
+                    <View style={[styles.playbillFallback, { backgroundColor: c.surface }]}>
+                      <Text style={[styles.playbillFallbackText, { color: c.mutedText }]}>{comparisonTarget.name}</Text>
                     </View>
                   )}
-                  <Text style={styles.playbillName} numberOfLines={2}>
+                  <Text style={[styles.playbillName, { color: c.text }]} numberOfLines={2}>
                     {comparisonTarget.name}
                   </Text>
                 </Pressable>
@@ -164,8 +174,8 @@ export function RankingSection({
 
           {selectedTier && rankingPhase === "result" && predictedResultIndex !== null && (
             <View style={styles.resultBlock}>
-              <Text style={styles.placeholderTitle}>Ranking ready</Text>
-              <Text style={styles.resultText}>
+              <Text style={[styles.placeholderTitle, { color: c.text }]}>Ranking ready</Text>
+              <Text style={[styles.resultText, { color: c.text }]}>
                 {`#${predictedResultIndex + 1} of ${rankedShowsForRanking.length + 1}`}
               </Text>
             </View>

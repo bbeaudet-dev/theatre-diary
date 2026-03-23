@@ -5,6 +5,8 @@ import type { Id } from "@/convex/_generated/dataModel";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { styles } from "@/features/profile/styles";
 import type { VisibleProfileList } from "@/features/profile/types";
+import { Colors } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
 
 export function ListsSection({
   isShowingCreateInput,
@@ -35,15 +37,28 @@ export function ListsSection({
   openList: (list: VisibleProfileList) => void;
   errorMessage: string | null;
 }) {
+  const colorScheme = useColorScheme();
+  const theme = colorScheme ?? "light";
+  const primaryTextColor = Colors[theme].text;
+  const mutedTextColor = Colors[theme].mutedText;
+  const surfaceColor = Colors[theme].surfaceElevated;
+  const borderColor = Colors[theme].border;
+  const chipBackground = Colors[theme].surface;
+  const accentColor = Colors[theme].accent;
+
   return (
-    <View style={styles.section}>
+    <View style={[styles.section, { backgroundColor: surfaceColor, borderColor }]}>
       <View style={styles.sectionHeader}>
-        <Text style={styles.sectionTitle}>Lists</Text>
+        <Text style={[styles.sectionTitle, { color: primaryTextColor }]}>Lists</Text>
         <Pressable
-          style={styles.iconButton}
+          style={[styles.iconButton, { backgroundColor: chipBackground, borderColor }]}
           onPress={() => setIsShowingCreateInput(!isShowingCreateInput)}
         >
-          <IconSymbol size={18} name={isShowingCreateInput ? "xmark" : "plus"} color="#111" />
+          <IconSymbol
+            size={18}
+            name={isShowingCreateInput ? "xmark" : "plus"}
+            color={primaryTextColor}
+          />
         </Pressable>
       </View>
 
@@ -52,7 +67,10 @@ export function ListsSection({
           <TextInput
             value={newListName}
             onChangeText={setNewListName}
-            style={styles.inlineInput}
+            style={[
+              styles.inlineInput,
+              { backgroundColor: chipBackground, borderColor, color: primaryTextColor },
+            ]}
             placeholder="List name"
             autoCapitalize="words"
             ref={inputRef}
@@ -62,6 +80,7 @@ export function ListsSection({
             style={[
               styles.inlineCreateButton,
               (isCreatingList || !newListName.trim()) && styles.disabledButton,
+              { backgroundColor: accentColor },
             ]}
             disabled={isCreatingList || !newListName.trim()}
           >
@@ -71,7 +90,7 @@ export function ListsSection({
       )}
 
       {profileListsLoading ? (
-        <ActivityIndicator size="small" color="#888" />
+        <ActivityIndicator size="small" color={mutedTextColor} />
       ) : (
         <>
           {visibleLists.map((list) => {
@@ -79,31 +98,39 @@ export function ListsSection({
             const idKey = String(list._id);
             const isPendingVisibility = !isSeen && pendingVisibilityIds.has(idKey);
             return (
-              <Pressable key={idKey} style={styles.listRow} onPress={() => openList(list)}>
+              <Pressable
+                key={idKey}
+                style={[styles.listRow, { backgroundColor: chipBackground, borderColor }]}
+                onPress={() => openList(list)}
+              >
                 <View style={styles.rowTop}>
                   <View style={styles.listInfo}>
-                    <Text style={styles.listName}>{list.name}</Text>
-                    <Text style={styles.listMeta}>{list.showCount} shows</Text>
+                    <Text style={[styles.listName, { color: primaryTextColor }]}>
+                      {list.name}
+                    </Text>
+                    <Text style={[styles.listMeta, { color: mutedTextColor }]}>
+                      {list.showCount} shows
+                    </Text>
                   </View>
                   {!isSeen ? (
                     <Pressable
-                      style={styles.iconButton}
+                      style={[styles.iconButton, { backgroundColor: chipBackground, borderColor }]}
                       onPress={() => onToggleVisibility(list._id as Id<"userLists">, list.isPublic)}
                       disabled={isPendingVisibility}
                     >
                       {isPendingVisibility ? (
-                        <Text style={styles.pendingText}>...</Text>
+                        <Text style={[styles.pendingText, { color: mutedTextColor }]}>...</Text>
                       ) : (
                         <IconSymbol
                           size={16}
                           name={list.isPublic ? "globe" : "lock.fill"}
-                          color="#111"
+                            color={primaryTextColor}
                         />
                       )}
                     </Pressable>
                   ) : (
-                    <View style={styles.iconButton}>
-                      <IconSymbol size={16} name="lock.fill" color="#111" />
+                    <View style={[styles.iconButton, { backgroundColor: chipBackground, borderColor }]}>
+                      <IconSymbol size={16} name="lock.fill" color={primaryTextColor} />
                     </View>
                   )}
                 </View>
@@ -112,7 +139,9 @@ export function ListsSection({
           })}
         </>
       )}
-      {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
+      {errorMessage ? (
+        <Text style={[styles.errorText, { color: Colors[theme].danger }]}>{errorMessage}</Text>
+      ) : null}
     </View>
   );
 }

@@ -5,6 +5,8 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { api } from "@/convex/_generated/api";
 import { DetailCard, detailCardStyles } from "@/components/detail-card";
+import { Colors } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
 
 export default function VisitDetailScreen() {
   const router = useRouter();
@@ -13,17 +15,24 @@ export default function VisitDetailScreen() {
   const allVisits = useQuery(api.visits.listAllWithShows);
   const visit = (allVisits ?? []).find((entry) => entry?._id === visitId) ?? null;
 
+  const colorScheme = useColorScheme();
+  const theme = colorScheme ?? "light";
+  const backgroundColor = Colors[theme].background;
+  const primaryTextColor = Colors[theme].text;
+  const mutedTextColor = Colors[theme].mutedText;
+  const accentColor = Colors[theme].accent;
+
   return (
-    <SafeAreaView style={styles.container} edges={["bottom"]}>
+    <SafeAreaView style={[styles.container, { backgroundColor }]} edges={["bottom"]}>
       <Stack.Screen options={{ title: "Visit", headerShown: true, headerBackButtonDisplayMode: "minimal" }} />
 
       <ScrollView contentContainerStyle={styles.content}>
         {!visit ? (
-          <Text style={styles.emptyText}>Visit not found.</Text>
+          <Text style={[styles.emptyText, { color: mutedTextColor }]}>Visit not found.</Text>
         ) : (
           <>
             <DetailCard title="Show">
-              <Text style={detailCardStyles.value}>{visit.show?.name ?? "Unknown Show"}</Text>
+              <Text style={[detailCardStyles.value, { color: primaryTextColor }]}>{visit.show?.name ?? "Unknown Show"}</Text>
               {visit.show?._id ? (
                 <Pressable
                   style={styles.linkButton}
@@ -37,21 +46,21 @@ export default function VisitDetailScreen() {
                     })
                   }
                 >
-                  <Text style={styles.linkText}>View Show Details</Text>
+                  <Text style={[styles.linkText, { color: accentColor }]}>View Show Details</Text>
                 </Pressable>
               ) : null}
             </DetailCard>
             <DetailCard title="Date">
-              <Text style={detailCardStyles.value}>{visit.date}</Text>
+              <Text style={[detailCardStyles.value, { color: primaryTextColor }]}>{visit.date}</Text>
             </DetailCard>
             <DetailCard title="Location">
-              <Text style={detailCardStyles.subtle}>
+              <Text style={[detailCardStyles.subtle, { color: mutedTextColor }]}>
                 {[visit.theatre, visit.city].filter(Boolean).join(" • ") || "—"}
               </Text>
             </DetailCard>
             {visit.notes ? (
               <DetailCard title="Notes">
-                <Text style={detailCardStyles.subtle}>{visit.notes}</Text>
+                <Text style={[detailCardStyles.subtle, { color: mutedTextColor }]}>{visit.notes}</Text>
               </DetailCard>
             ) : null}
           </>
@@ -62,9 +71,9 @@ export default function VisitDetailScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#fff" },
+  container: { flex: 1 },
   content: { padding: 16, gap: 10, paddingBottom: 32 },
-  emptyText: { fontSize: 15, color: "#8a8a8a" },
+  emptyText: { fontSize: 15 },
   linkButton: {
     alignSelf: "flex-start",
     marginTop: 6,
@@ -72,6 +81,5 @@ const styles = StyleSheet.create({
   linkText: {
     fontSize: 13,
     fontWeight: "600",
-    color: "#007AFF",
   },
 });
