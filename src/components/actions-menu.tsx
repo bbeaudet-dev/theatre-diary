@@ -16,14 +16,14 @@ export function ActionsMenu({
   onAddVisit,
   onCreateList,
 }: ActionsMenuProps) {
-  if (!visible) return null;
-
   const colorScheme = useColorScheme();
   const theme = colorScheme ?? "light";
   const sheetBackground = Colors[theme].background;
   const optionBackground = theme === "dark" ? "#202024" : "#f8f8ff";
   const optionBorder = theme === "dark" ? "#333" : "#e1e1e1";
   const optionTextColor = Colors[theme].text;
+
+  if (!visible) return null;
 
   return (
     <View style={styles.overlay} pointerEvents="box-none">
