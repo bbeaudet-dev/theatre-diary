@@ -1,7 +1,7 @@
 import { useMutation, useQuery } from "convex/react";
 import { Redirect, Stack } from "expo-router";
 import { useEffect, useState } from "react";
-import { Pressable, ScrollView, Text, TextInput, View } from "react-native";
+import { Keyboard, Pressable, ScrollView, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { api } from "@/convex/_generated/api";
@@ -29,6 +29,7 @@ export default function AccountSettingsScreen() {
   }, [myProfile]);
 
   const handleSaveProfile = async () => {
+    Keyboard.dismiss();
     setIsSavingProfile(true);
     try {
       await updateMyProfile({
@@ -45,10 +46,6 @@ export default function AccountSettingsScreen() {
     await authClient.signOut();
   };
 
-  if (!isPending && !session) {
-    return <Redirect href="/sign-in" />;
-  }
-
   const colorScheme = useColorScheme();
   const theme = colorScheme ?? "light";
   const backgroundColor = Colors[theme].background;
@@ -58,6 +55,10 @@ export default function AccountSettingsScreen() {
   const inputBorder = Colors[theme].border;
   const primaryButtonBg = Colors[theme].accent;
   const primaryButtonText = "#fff";
+
+  if (!isPending && !session) {
+    return <Redirect href="/sign-in" />;
+  }
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor }]} edges={["bottom"]}>

@@ -4,6 +4,7 @@ import { Pressable, ScrollView, StyleSheet, Text } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { api } from "@/convex/_generated/api";
+import type { Id } from "@/convex/_generated/dataModel";
 import { DetailCard, detailCardStyles } from "@/components/detail-card";
 import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
@@ -12,8 +13,10 @@ export default function VisitDetailScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<{ visitId?: string }>();
   const visitId = params.visitId ?? "";
-  const allVisits = useQuery(api.visits.listAllWithShows);
-  const visit = (allVisits ?? []).find((entry) => entry?._id === visitId) ?? null;
+  const visit = useQuery(
+    api.visits.getById,
+    visitId ? { visitId: visitId as Id<"visits"> } : "skip"
+  ) ?? null;
 
   const colorScheme = useColorScheme();
   const theme = colorScheme ?? "light";
