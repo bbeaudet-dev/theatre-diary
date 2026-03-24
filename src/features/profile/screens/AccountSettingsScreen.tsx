@@ -1,10 +1,11 @@
 import { useMutation, useQuery } from "convex/react";
 import { Redirect, Stack } from "expo-router";
 import { useEffect, useState } from "react";
-import { Pressable, ScrollView, Text, TextInput, View } from "react-native";
+import { Keyboard, Pressable, ScrollView, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { api } from "@/convex/_generated/api";
+import * as Notifications from "expo-notifications";
 import { styles } from "@/features/profile/styles";
 import { AccountSection } from "@/features/profile/components/AccountSection";
 import { Colors } from "@/constants/theme";
@@ -15,6 +16,7 @@ export default function AccountSettingsScreen() {
   const { data: session, isPending } = useSession();
   const myProfile = useQuery(api.profiles.getMyProfile);
   const updateMyProfile = useMutation(api.profiles.updateMyProfile);
+  const removePushToken = useMutation(api.notifications.removePushToken);
 
   const [nameDraft, setNameDraft] = useState("");
   const [bioDraft, setBioDraft] = useState("");
@@ -29,6 +31,7 @@ export default function AccountSettingsScreen() {
   }, [myProfile]);
 
   const handleSaveProfile = async () => {
+    Keyboard.dismiss();
     setIsSavingProfile(true);
     try {
       await updateMyProfile({
@@ -42,12 +45,10 @@ export default function AccountSettingsScreen() {
   };
 
   const handleSignOut = async () => {
+    await removePushToken();
+    await Notifications.setBadgeCountAsync(0);
     await authClient.signOut();
   };
-
-  if (!isPending && !session) {
-    return <Redirect href="/sign-in" />;
-  }
 
   const colorScheme = useColorScheme();
   const theme = colorScheme ?? "light";
@@ -58,6 +59,10 @@ export default function AccountSettingsScreen() {
   const inputBorder = Colors[theme].border;
   const primaryButtonBg = Colors[theme].accent;
   const primaryButtonText = "#fff";
+
+  if (!isPending && !session) {
+    return <Redirect href="/sign-in" />;
+  }
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor }]} edges={["bottom"]}>

@@ -72,6 +72,7 @@ export default defineSchema({
     location: v.optional(v.string()),
     avatarImage: v.optional(v.id("_storage")),
     betterAuthUserId: v.string(),
+    expoPushToken: v.optional(v.string()),
     createdAt: v.number(),
     updatedAt: v.number(),
   })
@@ -153,6 +154,7 @@ export default defineSchema({
     // Notable cast members seen at this performance.
     cast: v.optional(v.array(v.string())),
     notes: v.optional(v.string()),
+    taggedUserIds: v.optional(v.array(v.id("users"))),
   })
     .index("by_user_show", ["userId", "showId"])
     .index("by_user", ["userId"])
@@ -166,6 +168,21 @@ export default defineSchema({
     .index("by_follower", ["followerUserId"])
     .index("by_following", ["followingUserId"])
     .index("by_follower_following", ["followerUserId", "followingUserId"]),
+
+  notifications: defineTable({
+    recipientUserId: v.id("users"),
+    actorUserId: v.id("users"),
+    type: v.union(
+      v.literal("visit_tag"),
+      v.literal("new_follow"),
+    ),
+    visitId: v.optional(v.id("visits")),
+    showId: v.optional(v.id("shows")),
+    isRead: v.boolean(),
+    createdAt: v.number(),
+  })
+    .index("by_recipient_createdAt", ["recipientUserId", "createdAt"])
+    .index("by_recipient_isRead", ["recipientUserId", "isRead"]),
 
   activityPosts: defineTable({
     actorUserId: v.id("users"),
