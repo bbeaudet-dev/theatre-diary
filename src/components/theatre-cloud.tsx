@@ -39,9 +39,18 @@ interface Placement {
 }
 
 const PLAYBILL_RATIO = 1.5;
-const MAX_WIDTH = 115;
 const MIN_WIDTH = 42;
 const ITEM_GAP = 3;
+
+// Width range (px) per tier. First-ranked show in each tier gets the max width,
+// last-ranked gets the min. Unranked shows are the smallest.
+const TIER_WIDTH_RANGE: Record<string, readonly [number, number]> = {
+  loved:    [100, 115],
+  liked:    [80,  95],
+  okay:     [65,  78],
+  disliked: [52,  63],
+  unranked: [42,  50],
+};
 const CORNER_RADIUS_RATIO = 0.05;
 
 function overlaps(
@@ -67,12 +76,26 @@ function overlaps(
 function computeLayout(shows: CloudShow[]): Placement[] {
   if (!shows.length) return [];
 
+  // Pre-count shows per tier so we can normalize the intra-tier rank to [0, 1].
+  const tierCounts: Record<string, number> = {};
+  for (const show of shows) {
+    const tier = show.tier ?? 'unranked';
+    tierCounts[tier] = (tierCounts[tier] ?? 0) + 1;
+  }
+  const tierProgress: Record<string, number> = {};
+
   const placed: Placement[] = [];
 
   for (let i = 0; i < shows.length; i++) {
     const show = shows[i];
-    const t = shows.length > 1 ? i / (shows.length - 1) : 0;
-    const w = MAX_WIDTH - (MAX_WIDTH - MIN_WIDTH) * Math.pow(t, 0.6);
+    const tier = show.tier ?? 'unranked';
+    const idxInTier = tierProgress[tier] ?? 0;
+    tierProgress[tier] = idxInTier + 1;
+    const tierCount = tierCounts[tier];
+    // tInTier goes 0 → 1 from best to worst within the tier.
+    const tInTier = tierCount > 1 ? idxInTier / (tierCount - 1) : 0;
+    const widthRange = TIER_WIDTH_RANGE[tier] ?? TIER_WIDTH_RANGE['unranked'];
+    const w = widthRange[1] - (widthRange[1] - widthRange[0]) * tInTier;
     const h = w * PLAYBILL_RATIO;
 
     // Multi-angle spiral: try 8 evenly-spaced radial directions (anchored to
