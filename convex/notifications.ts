@@ -1,6 +1,86 @@
 import { v } from "convex/values";
-import { mutation, query } from "./_generated/server";
+import { internalAction, internalQuery, mutation, query } from "./_generated/server";
+import { internal } from "./_generated/api";
 import { requireConvexUserId } from "./auth";
+
+// ─── Push helpers ────────────────────────────────────────────────────────────
+
+const EXPO_PUSH_URL = "https://exp.host/--/api/v2/push/send";
+
+type ExpoPushMessage = {
+  to: string;
+  title: string;
+  body: string;
+  data?: Record<string, string>;
+  sound?: "default" | null;
+};
+
+export const savePushToken = mutation({
+  args: { token: v.string() },
+  handler: async (ctx, args) => {
+    const userId = await requireConvexUserId(ctx);
+    await ctx.db.patch(userId, { expoPushToken: args.token });
+  },
+});
+
+export const removePushToken = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const userId = await requireConvexUserId(ctx);
+    await ctx.db.patch(userId, { expoPushToken: undefined });
+  },
+});
+
+export const getUserPushToken = internalQuery({
+  args: { userId: v.id("users") },
+  handler: async (ctx, args) => {
+    const user = await ctx.db.get(args.userId);
+    return user?.expoPushToken ?? null;
+  },
+});
+
+export const sendPushNotification = internalAction({
+  args: {
+    recipientUserId: v.id("users"),
+    title: v.string(),
+    body: v.string(),
+    data: v.optional(v.record(v.string(), v.string())),
+  },
+  handler: async (ctx, args) => {
+    const token = await ctx.runQuery(internal.notifications.getUserPushToken, {
+      userId: args.recipientUserId,
+    });
+
+    if (!token || !token.startsWith("ExponentPushToken[")) return;
+
+    const message: ExpoPushMessage = {
+      to: token,
+      title: args.title,
+      body: args.body,
+      data: args.data,
+      sound: "default",
+    };
+
+    try {
+      const res = await fetch(EXPO_PUSH_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+          "Accept-Encoding": "gzip, deflate",
+        },
+        body: JSON.stringify(message),
+      });
+      if (!res.ok) {
+        console.error("Expo push failed:", res.status, await res.text());
+      }
+    } catch (err) {
+      console.error("Expo push error:", err);
+    }
+  },
+});
+
+// ─── Notification queries / mutations ────────────────────────────────────────
 
 export const listForCurrentUser = query({
   args: { limit: v.optional(v.number()) },

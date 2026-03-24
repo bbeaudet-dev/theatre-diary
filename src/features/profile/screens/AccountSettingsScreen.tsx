@@ -5,6 +5,7 @@ import { Keyboard, Pressable, ScrollView, Text, TextInput, View } from "react-na
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { api } from "@/convex/_generated/api";
+import * as Notifications from "expo-notifications";
 import { styles } from "@/features/profile/styles";
 import { AccountSection } from "@/features/profile/components/AccountSection";
 import { Colors } from "@/constants/theme";
@@ -15,6 +16,7 @@ export default function AccountSettingsScreen() {
   const { data: session, isPending } = useSession();
   const myProfile = useQuery(api.profiles.getMyProfile);
   const updateMyProfile = useMutation(api.profiles.updateMyProfile);
+  const removePushToken = useMutation(api.notifications.removePushToken);
 
   const [nameDraft, setNameDraft] = useState("");
   const [bioDraft, setBioDraft] = useState("");
@@ -43,6 +45,8 @@ export default function AccountSettingsScreen() {
   };
 
   const handleSignOut = async () => {
+    await removePushToken();
+    await Notifications.setBadgeCountAsync(0);
     await authClient.signOut();
   };
 

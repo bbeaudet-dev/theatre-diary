@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
+import { internal } from "./_generated/api";
 import { requireConvexUserId } from "./auth";
 import { resolveImageUrls } from "./helpers";
 import { removeShowFromSystemLists } from "./listRules";
@@ -351,8 +352,13 @@ export const createVisit = mutation({
     });
 
     const now = Date.now();
+    const show = await ctx.db.get(showId);
+    const showName = show?.name ?? "a show";
+    const actor = await ctx.db.get(userId);
+    const actorLabel = actor?.name?.split(" ")[0] ?? actor?.username ?? "Someone";
+
     await Promise.all(
-      validTaggedUserIds.map((recipientId) =>
+      validTaggedUserIds.flatMap((recipientId) => [
         ctx.db.insert("notifications", {
           recipientUserId: recipientId,
           actorUserId: userId,
@@ -361,8 +367,14 @@ export const createVisit = mutation({
           showId,
           isRead: false,
           createdAt: now,
-        })
-      )
+        }),
+        ctx.scheduler.runAfter(0, internal.notifications.sendPushNotification, {
+          recipientUserId: recipientId,
+          title: "You were tagged in a visit",
+          body: `${actorLabel} tagged you in their visit to ${showName}`,
+          data: { type: "visit_tag", visitId },
+        }),
+      ])
     );
 
     const rankingIndex = finalRankingShowIds.indexOf(showId);

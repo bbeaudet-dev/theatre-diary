@@ -72,6 +72,7 @@ export default defineSchema({
     location: v.optional(v.string()),
     avatarImage: v.optional(v.id("_storage")),
     betterAuthUserId: v.string(),
+    expoPushToken: v.optional(v.string()),
     createdAt: v.number(),
     updatedAt: v.number(),
   })

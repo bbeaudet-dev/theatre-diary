@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
+import { internal } from "./_generated/api";
 import { requireConvexUserId } from "./auth";
 
 async function resolveFollowUserRow(ctx: any, userId: string) {
@@ -48,6 +49,16 @@ export const followUser = mutation({
       type: "new_follow",
       isRead: false,
       createdAt: now,
+    });
+
+    const actor = await ctx.db.get(currentUserId);
+    const actorLabel = actor?.name?.split(" ")[0] ?? actor?.username ?? "Someone";
+
+    await ctx.scheduler.runAfter(0, internal.notifications.sendPushNotification, {
+      recipientUserId: args.userId,
+      title: "New follower",
+      body: `${actorLabel} started following you`,
+      data: { type: "new_follow", actorUsername: actor?.username ?? "" },
     });
 
     return { followed: true };
