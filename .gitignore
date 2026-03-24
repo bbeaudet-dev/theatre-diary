@@ -45,3 +45,6 @@ convex/_generated/
 # generated native folders
 /ios
 /android
+
+# local docs
+docs/
