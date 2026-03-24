@@ -35,11 +35,21 @@ export const followUser = mutation({
       .first();
     if (existing) return { followed: false };
 
+    const now = Date.now();
     await ctx.db.insert("follows", {
       followerUserId: currentUserId,
       followingUserId: args.userId,
-      createdAt: Date.now(),
+      createdAt: now,
     });
+
+    await ctx.db.insert("notifications", {
+      recipientUserId: args.userId,
+      actorUserId: currentUserId,
+      type: "new_follow",
+      isRead: false,
+      createdAt: now,
+    });
+
     return { followed: true };
   },
 });
@@ -93,6 +103,27 @@ export const listFollowing = query({
     const rows = await ctx.db
       .query("follows")
       .withIndex("by_follower", (q) => q.eq("followerUserId", args.userId))
+      .collect();
+
+    const sorted = rows.sort((a, b) => b.createdAt - a.createdAt).slice(0, limit);
+    const users = await Promise.all(
+      sorted.map(async (row) => {
+        const user = await resolveFollowUserRow(ctx, row.followingUserId);
+        return user ? { ...user, followedAt: row.createdAt } : null;
+      })
+    );
+    return users.filter((user): user is NonNullable<typeof user> => user !== null);
+  },
+});
+
+export const listMyFollowing = query({
+  args: { limit: v.optional(v.number()) },
+  handler: async (ctx, args) => {
+    const currentUserId = await requireConvexUserId(ctx);
+    const limit = Math.max(1, Math.min(args.limit ?? 100, 200));
+    const rows = await ctx.db
+      .query("follows")
+      .withIndex("by_follower", (q) => q.eq("followerUserId", currentUserId))
       .collect();
 
     const sorted = rows.sort((a, b) => b.createdAt - a.createdAt).slice(0, limit);

@@ -55,6 +55,21 @@ function getBottomInsertionIndexForTier(
   return showIds.length;
 }
 
+export const getById = query({
+  args: { visitId: v.id("visits") },
+  handler: async (ctx, args) => {
+    await requireConvexUserId(ctx);
+    const visit = await ctx.db.get(args.visitId);
+    if (!visit) return null;
+
+    const show = await ctx.db.get(visit.showId);
+    if (!show) return null;
+
+    const images = await resolveImageUrls(ctx, show.images);
+    return { ...visit, show: { ...show, images } };
+  },
+});
+
 export const listByShow = query({
   args: { showId: v.id("shows") },
   handler: async (ctx, args) => {
@@ -183,6 +198,7 @@ export const createVisit = mutation({
     keepCurrentRanking: v.optional(v.boolean()),
     selectedTier: v.optional(rankedTierValidator),
     completedInsertionIndex: v.optional(v.number()),
+    taggedUserIds: v.optional(v.array(v.id("users"))),
   },
   handler: async (ctx, args) => {
     const userId = await requireConvexUserId(ctx);
@@ -318,6 +334,10 @@ export const createVisit = mutation({
       }
     }
 
+    const validTaggedUserIds = (args.taggedUserIds ?? []).filter(
+      (id) => id !== userId
+    );
+
     const visitId = await ctx.db.insert("visits", {
       userId,
       showId,
@@ -327,7 +347,23 @@ export const createVisit = mutation({
       theatre: args.theatre,
       district: args.district,
       notes: args.notes,
+      taggedUserIds: validTaggedUserIds.length > 0 ? validTaggedUserIds : undefined,
     });
+
+    const now = Date.now();
+    await Promise.all(
+      validTaggedUserIds.map((recipientId) =>
+        ctx.db.insert("notifications", {
+          recipientUserId: recipientId,
+          actorUserId: userId,
+          type: "visit_tag",
+          visitId,
+          showId,
+          isRead: false,
+          createdAt: now,
+        })
+      )
+    );
 
     const rankingIndex = finalRankingShowIds.indexOf(showId);
     const trimmedNotes = args.notes?.trim();
