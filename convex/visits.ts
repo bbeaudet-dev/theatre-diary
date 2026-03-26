@@ -41,6 +41,28 @@ function normalizeVenueName(name: string) {
     .trim();
 }
 
+function getBigrams(value: string) {
+  const normalized = value.replace(/\s+/g, " ");
+  if (normalized.length < 2) return new Set([normalized]);
+  const grams = new Set<string>();
+  for (let i = 0; i < normalized.length - 1; i += 1) {
+    grams.add(normalized.slice(i, i + 2));
+  }
+  return grams;
+}
+
+function stringSimilarity(a: string, b: string) {
+  if (!a || !b) return 0;
+  if (a === b) return 1;
+  const aGrams = getBigrams(a);
+  const bGrams = getBigrams(b);
+  let overlap = 0;
+  for (const gram of aGrams) {
+    if (bGrams.has(gram)) overlap += 1;
+  }
+  return (2 * overlap) / (aGrams.size + bGrams.size);
+}
+
 async function resolveVenueIdForVisit(
   ctx: any,
   theatre: string | undefined,
@@ -52,7 +74,7 @@ async function resolveVenueIdForVisit(
   if (!normalizedName) return undefined;
 
   const trimmedCity = city?.trim();
-  const matchedVenue = trimmedCity
+  const exactByName = trimmedCity
     ? await ctx.db
         .query("venues")
         .withIndex("by_city_normalized_name", (q: any) =>
@@ -63,8 +85,48 @@ async function resolveVenueIdForVisit(
         .query("venues")
         .withIndex("by_normalized_name", (q: any) => q.eq("normalizedName", normalizedName))
         .first();
+  if (exactByName?._id) return exactByName._id;
 
-  return matchedVenue?._id;
+  const cityCandidates = trimmedCity
+    ? await ctx.db
+        .query("venues")
+        .withIndex("by_city", (q: any) => q.eq("city", trimmedCity))
+        .collect()
+    : await ctx.db.query("venues").collect();
+
+  // Alias exact match
+  for (const venue of cityCandidates) {
+    const aliases = venue.aliases ?? [];
+    for (const alias of aliases) {
+      if (normalizeVenueName(alias) === normalizedName) {
+        return venue._id;
+      }
+    }
+  }
+
+  // Fuzzy fallback with confidence gap check.
+  let best: { id: Id<"venues">; score: number } | null = null;
+  let secondBestScore = 0;
+  for (const venue of cityCandidates) {
+    const aliasScores = (venue.aliases ?? []).map((alias: string) =>
+      stringSimilarity(normalizedName, normalizeVenueName(alias))
+    );
+    const score = Math.max(
+      stringSimilarity(normalizedName, venue.normalizedName),
+      ...aliasScores,
+    );
+    if (!best || score > best.score) {
+      secondBestScore = best?.score ?? 0;
+      best = { id: venue._id, score };
+    } else if (score > secondBestScore) {
+      secondBestScore = score;
+    }
+  }
+
+  if (!best) return undefined;
+  if (best.score < 0.86) return undefined;
+  if (best.score - secondBestScore < 0.06) return undefined;
+  return best.id;
 }
 
 function getBottomInsertionIndexForTier(
@@ -200,6 +262,7 @@ export const listMapPins = query({
         city?: string;
         visitCount: number;
         uniqueUserIds: Set<string>;
+        showIds: Set<Id<"shows">>;
         latitude?: number;
         longitude?: number;
       }
@@ -214,6 +277,7 @@ export const listMapPins = query({
       if (existing) {
         existing.visitCount += 1;
         existing.uniqueUserIds.add(visit.userId);
+        existing.showIds.add(visit.showId);
         if (existing.latitude === undefined && visit.venueId) {
           const venue = await ctx.db.get(visit.venueId);
           if (venue?.latitude !== undefined && venue?.longitude !== undefined) {
@@ -257,17 +321,40 @@ export const listMapPins = query({
         city,
         visitCount: 1,
         uniqueUserIds: new Set([visit.userId]),
+        showIds: new Set([visit.showId]),
         latitude,
         longitude,
       });
     }
+    const showImageCache = new Map<Id<"shows">, string | null>();
+    const enriched = await Promise.all(
+      Array.from(rows.values()).map(async ({ uniqueUserIds, showIds, ...row }) => {
+        const previewImages: string[] = [];
+        for (const showId of showIds) {
+          if (showImageCache.has(showId)) {
+            const cached = showImageCache.get(showId);
+            if (cached) previewImages.push(cached);
+            continue;
+          }
+          const show = await ctx.db.get(showId);
+          if (!show) {
+            showImageCache.set(showId, null);
+            continue;
+          }
+          const images = await resolveShowImageUrls(ctx, show);
+          const first = images[0] ?? null;
+          showImageCache.set(showId, first);
+          if (first) previewImages.push(first);
+        }
+        return {
+          ...row,
+          uniqueUserCount: uniqueUserIds.size,
+          previewImages: Array.from(new Set(previewImages)).slice(0, 4),
+        };
+      })
+    );
 
-    return Array.from(rows.values())
-      .map(({ uniqueUserIds, ...row }) => ({
-        ...row,
-        uniqueUserCount: uniqueUserIds.size,
-      }))
-      .sort((a, b) => b.visitCount - a.visitCount || a.theatre.localeCompare(b.theatre));
+    return enriched.sort((a, b) => b.visitCount - a.visitCount || a.theatre.localeCompare(b.theatre));
   },
 });
 

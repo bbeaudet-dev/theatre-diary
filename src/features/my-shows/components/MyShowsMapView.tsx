@@ -1,6 +1,6 @@
 import { useQuery } from "convex/react";
 import { useEffect, useMemo, useState } from "react";
-import { Platform, StyleSheet, Text, TouchableOpacity, UIManager, View } from "react-native";
+import { Image, Platform, StyleSheet, Text, TouchableOpacity, UIManager, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
 import { Colors } from "@/constants/theme";
@@ -8,7 +8,6 @@ import { api } from "@/convex/_generated/api";
 import type { MapScope } from "@/features/my-shows/types";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 
-const GOOGLE_MAPS_API_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY;
 const HAS_NATIVE_MAP =
   Platform.OS !== "web" && Boolean(UIManager.getViewManagerConfig?.("AIRMap"));
 const CLUSTER_THRESHOLD_FACTOR = 0.08;
@@ -28,6 +27,7 @@ type MapPinRow = {
   uniqueUserCount: number;
   latitude?: number;
   longitude?: number;
+  previewImages?: string[];
 };
 
 type MarkerPoint = {
@@ -38,6 +38,7 @@ type MarkerPoint = {
   uniqueUserCount: number;
   latitude: number;
   longitude: number;
+  previewImages: string[];
 };
 type MarkerCluster = {
   key: string;
@@ -47,6 +48,7 @@ type MarkerCluster = {
   theatreCount: number;
   theatres: string[];
   city?: string;
+  previewImages: string[];
 };
 type MapCoverageStats = {
   totalVisits: number;
@@ -54,34 +56,6 @@ type MapCoverageStats = {
   visitsMissingLocation: number;
   uniqueShowsMissingLocation: number;
 };
-
-const geocodeCache = new Map<string, { latitude: number; longitude: number } | null>();
-
-async function geocodeVenue(address: string) {
-  if (!GOOGLE_MAPS_API_KEY) return null;
-  if (geocodeCache.has(address)) return geocodeCache.get(address) ?? null;
-
-  try {
-    const response = await fetch(
-      `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(address)}&key=${GOOGLE_MAPS_API_KEY}`
-    );
-    const payload = (await response.json()) as {
-      status?: string;
-      results?: { geometry?: { location?: { lat?: number; lng?: number } } }[];
-    };
-
-    const location = payload.results?.[0]?.geometry?.location;
-    const coords =
-      payload.status === "OK" && location?.lat !== undefined && location?.lng !== undefined
-        ? { latitude: location.lat, longitude: location.lng }
-        : null;
-    geocodeCache.set(address, coords);
-    return coords;
-  } catch {
-    geocodeCache.set(address, null);
-    return null;
-  }
-}
 
 export function MyShowsMapView({
   tabBarHeight,
@@ -97,9 +71,7 @@ export function MyShowsMapView({
     scope: mapScope,
   }) as MapCoverageStats | undefined;
   const [markers, setMarkers] = useState<MarkerPoint[]>([]);
-  const [resolving, setResolving] = useState(false);
   const [showScopeMenu, setShowScopeMenu] = useState(false);
-  const [hasResolutionError, setHasResolutionError] = useState(false);
   const [nativeMapView, setNativeMapView] = useState<any>(null);
   const [nativeMarker, setNativeMarker] = useState<any>(null);
   const [mapRegion, setMapRegion] = useState(NYC_REGION);
@@ -130,44 +102,21 @@ export function MyShowsMapView({
   }, []);
 
   useEffect(() => {
-    let cancelled = false;
-    const run = async () => {
-      if (!GOOGLE_MAPS_API_KEY || !mapPins) {
-        setMarkers([]);
-        setHasResolutionError(false);
-        return;
-      }
-      setResolving(true);
-      const resolved: MarkerPoint[] = [];
-      for (const row of mapPins) {
-        if (row.latitude !== undefined && row.longitude !== undefined) {
-          resolved.push({
-            ...row,
-            latitude: row.latitude,
-            longitude: row.longitude,
-          });
-          continue;
-        }
-        const address = [row.theatre, row.city].filter(Boolean).join(", ");
-        const coords = await geocodeVenue(address);
-        if (!coords || cancelled) continue;
-        resolved.push({
+    if (!mapPins) {
+      setMarkers([]);
+      return;
+    }
+    const resolved = mapPins
+      .filter((row) => row.latitude !== undefined && row.longitude !== undefined)
+      .map(
+        (row): MarkerPoint => ({
           ...row,
-          ...coords,
-        });
-      }
-      if (!cancelled) {
-        setMarkers(resolved);
-        setHasResolutionError(mapPins.length > 0 && resolved.length === 0);
-        setResolving(false);
-      }
-    };
-    run().catch(() => {
-      if (!cancelled) setResolving(false);
-    });
-    return () => {
-      cancelled = true;
-    };
+          latitude: row.latitude!,
+          longitude: row.longitude!,
+          previewImages: row.previewImages ?? [],
+        })
+      );
+    setMarkers(resolved);
   }, [mapPins]);
 
   const initialRegion = useMemo(() => {
@@ -204,6 +153,7 @@ export function MyShowsMapView({
       theatres: string[];
       city?: string;
       count: number;
+      previewImages: string[];
     }> = [];
 
     for (const marker of markers) {
@@ -221,6 +171,7 @@ export function MyShowsMapView({
           theatres: [marker.theatre],
           city: marker.city,
           count: 1,
+          previewImages: marker.previewImages.slice(0, 4),
         });
         continue;
       }
@@ -231,6 +182,9 @@ export function MyShowsMapView({
       existing.visitCount += marker.visitCount;
       existing.theatres.push(marker.theatre);
       existing.count = nextCount;
+      existing.previewImages = Array.from(
+        new Set([...existing.previewImages, ...marker.previewImages])
+      ).slice(0, 4);
     }
 
     return clusters.map((cluster, index) => ({
@@ -241,6 +195,7 @@ export function MyShowsMapView({
       theatreCount: cluster.count,
       theatres: cluster.theatres,
       city: cluster.city,
+      previewImages: cluster.previewImages,
     }));
   }, [mapRegion.latitudeDelta, mapRegion.longitudeDelta, markers]);
 
@@ -263,13 +218,6 @@ export function MyShowsMapView({
             Install a fresh dev build after adding maps (`bun run ios` or `bun run android`).
           </Text>
         </View>
-      ) : !GOOGLE_MAPS_API_KEY ? (
-        <View style={styles.centered}>
-          <Text style={[styles.messageTitle, { color: textColor }]}>Map setup needed</Text>
-          <Text style={[styles.messageBody, { color: mutedTextColor }]}>
-            Add EXPO_PUBLIC_GOOGLE_MAPS_API_KEY to render theatre pins.
-          </Text>
-        </View>
       ) : (
         <View style={styles.mapStage}>
           <View style={styles.mapWrap}>
@@ -287,8 +235,29 @@ export function MyShowsMapView({
                     description={`${marker.theatres.slice(0, 4).join(", ")}${marker.theatreCount > 4 ? "..." : ""}`}
                     tracksViewChanges={false}
                   >
-                    <View style={styles.clusterBubble}>
-                      <Text style={styles.clusterBubbleText}>{marker.theatreCount}</Text>
+                    <View style={styles.clusterStackWrap}>
+                      {marker.previewImages.length > 0 ? (
+                        <View style={styles.clusterCardStack}>
+                          {marker.previewImages.slice(0, 3).map((uri: string, idx: number) => (
+                            <View
+                              key={`${marker.key}:${uri}`}
+                              style={[
+                                styles.clusterStackCard,
+                                {
+                                  transform: [{ rotate: `${(idx - 1) * 8}deg` }],
+                                  left: idx * 7,
+                                  zIndex: 10 + idx,
+                                },
+                              ]}
+                            >
+                              <Image source={{ uri }} style={styles.clusterStackImage} />
+                            </View>
+                          ))}
+                        </View>
+                      ) : null}
+                      <View style={styles.clusterBubble}>
+                        <Text style={styles.clusterBubbleText}>{marker.theatreCount}</Text>
+                      </View>
                     </View>
                   </NativeMarkerComponent>
                 ) : (
@@ -301,27 +270,31 @@ export function MyShowsMapView({
                         ? `${marker.city} - ${marker.visitCount} visits`
                         : `${marker.visitCount} visits`
                     }
-                  />
+                  >
+                    {marker.previewImages[0] ? (
+                      <View style={styles.playbillPinWrap}>
+                        <View style={styles.playbillCard}>
+                          <Image
+                            source={{ uri: marker.previewImages[0] }}
+                            style={styles.playbillImage}
+                          />
+                        </View>
+                        <View style={styles.playbillPinStem} />
+                      </View>
+                    ) : (
+                      <View style={styles.clusterBubble}>
+                        <Text style={styles.clusterBubbleText}>1</Text>
+                      </View>
+                    )}
+                  </NativeMarkerComponent>
                 )
               )}
             </NativeMapViewComponent>
           </View>
           <View pointerEvents="box-none" style={styles.overlayLayer}>
-            {resolving ? (
-              <View style={[styles.resolvingBadge, { backgroundColor: overlayBg, borderColor }]}>
-                <Text style={[styles.resolvingText, { color: overlayText }]}>Resolving theatres...</Text>
-              </View>
-            ) : null}
-            {!resolving && entries.length === 0 ? (
+            {entries.length === 0 ? (
               <View style={[styles.infoBadge, { backgroundColor: overlayBg, borderColor }]}>
                 <Text style={[styles.infoText, { color: overlayText }]}>No theatres for this filter yet.</Text>
-              </View>
-            ) : null}
-            {hasResolutionError ? (
-              <View style={[styles.errorBadge, { backgroundColor: overlayBg, borderColor }]}>
-                <Text style={[styles.errorText, { color: overlayText }]}>
-                  Couldn&apos;t resolve locations. Check your geocoding key restrictions.
-                </Text>
               </View>
             ) : null}
             {coverageStats ? (
@@ -431,34 +404,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     textAlign: "center",
   },
-  resolvingBadge: {
-    position: "absolute",
-    top: 12,
-    right: 12,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderRadius: 999,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-  },
-  resolvingText: {
-    fontSize: 12,
-    fontWeight: "600",
-  },
-  errorBadge: {
-    position: "absolute",
-    left: 12,
-    right: 12,
-    bottom: 12,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderRadius: 10,
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-  },
-  errorText: {
-    fontSize: 12,
-    fontWeight: "500",
-    textAlign: "center",
-  },
   coverageBadge: {
     position: "absolute",
     left: 12,
@@ -533,5 +478,58 @@ const styles = StyleSheet.create({
     color: "#ffffff",
     fontSize: 12,
     fontWeight: "700",
+  },
+  playbillPinWrap: {
+    alignItems: "center",
+  },
+  playbillCard: {
+    width: 34,
+    height: 46,
+    borderRadius: 4,
+    overflow: "hidden",
+    borderWidth: 1,
+    borderColor: "#fff",
+    backgroundColor: "#fff",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.18,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  playbillImage: {
+    width: "100%",
+    height: "100%",
+    resizeMode: "cover",
+  },
+  playbillPinStem: {
+    width: 2,
+    height: 10,
+    backgroundColor: "#111827",
+    borderRadius: 2,
+    marginTop: -1,
+  },
+  clusterStackWrap: {
+    alignItems: "center",
+  },
+  clusterCardStack: {
+    width: 42,
+    height: 26,
+    marginBottom: 3,
+    position: "relative",
+  },
+  clusterStackCard: {
+    position: "absolute",
+    width: 18,
+    height: 24,
+    borderRadius: 3,
+    overflow: "hidden",
+    borderWidth: 1,
+    borderColor: "#fff",
+    backgroundColor: "#fff",
+  },
+  clusterStackImage: {
+    width: "100%",
+    height: "100%",
+    resizeMode: "cover",
   },
 });
