@@ -96,6 +96,7 @@ export default defineSchema({
   })
     .index("by_normalized_name", ["normalizedName"])
     .index("by_city_normalized_name", ["city", "normalizedName"])
+    .index("by_city", ["city"])
     .index("by_district", ["district"]),
 
   users: defineTable({
