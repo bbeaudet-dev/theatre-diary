@@ -212,7 +212,7 @@ export default function AddVisitScreen() {
     <SafeAreaView style={[styles.container, { backgroundColor: bg }]} edges={["top", "bottom"]}>
       <KeyboardAvoidingView
         style={styles.flex}
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
       >
         <View style={[styles.header, { borderBottomColor: border }]}>
           <Text style={[styles.title, { color: text }]}>Add Visit</Text>
