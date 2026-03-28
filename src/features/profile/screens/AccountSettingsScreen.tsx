@@ -1,7 +1,7 @@
 import { useMutation, useQuery } from "convex/react";
 import { Redirect, Stack } from "expo-router";
 import { useEffect, useState } from "react";
-import { Keyboard, Pressable, ScrollView, Text, TextInput, View } from "react-native";
+import { Keyboard, KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { api } from "@/convex/_generated/api";
@@ -71,6 +71,10 @@ export default function AccountSettingsScreen() {
           headerBackButtonDisplayMode: "minimal",
         }}
       />
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+      >
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         <View style={[styles.section, { backgroundColor: surfaceColor, borderColor: inputBorder }]}>
           <Text style={[styles.sectionTitle, { color: primaryTextColor }]}>Edit profile</Text>
@@ -123,6 +127,7 @@ export default function AccountSettingsScreen() {
           onSignOut={handleSignOut}
         />
       </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
