@@ -40,7 +40,8 @@ yarn-error.*
 app-example
 
 # Convex
-convex/_generated/
+# _generated is committed so EAS cloud builds have the Convex API types
+# convex/_generated/
 
 # generated native folders
 /ios
