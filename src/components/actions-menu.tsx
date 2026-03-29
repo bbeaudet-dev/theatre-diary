@@ -1,14 +1,17 @@
 import { Modal, Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 
 import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
+
+// Standard iOS tab bar height (49pt) + bottom safe area inset.
+const TAB_BAR_BASE_HEIGHT = 49;
 
 interface ActionsMenuProps {
   visible: boolean;
   onClose: () => void;
   onAddVisit: () => void;
+  onCreateTrip: () => void;
   onCreateList: () => void;
 }
 
@@ -16,6 +19,7 @@ export function ActionsMenu({
   visible,
   onClose,
   onAddVisit,
+  onCreateTrip,
   onCreateList,
 }: ActionsMenuProps) {
   const colorScheme = useColorScheme();
@@ -24,7 +28,8 @@ export function ActionsMenu({
   const optionBackground = theme === "dark" ? "#202024" : "#f8f8ff";
   const optionBorder = theme === "dark" ? "#333" : "#e1e1e1";
   const optionTextColor = Colors[theme].text;
-  const tabBarHeight = useBottomTabBarHeight();
+  const insets = useSafeAreaInsets();
+  const tabBarHeight = TAB_BAR_BASE_HEIGHT + insets.bottom;
 
   return (
     <Modal
@@ -49,6 +54,12 @@ export function ActionsMenu({
               onPress={onAddVisit}
             >
               <Text style={[styles.optionTitle, { color: optionTextColor }]}>Add a Visit</Text>
+            </Pressable>
+            <Pressable
+              style={[styles.optionButton, { backgroundColor: optionBackground, borderColor: optionBorder }]}
+              onPress={onCreateTrip}
+            >
+              <Text style={[styles.optionTitle, { color: optionTextColor }]}>Create a Trip</Text>
             </Pressable>
             <Pressable
               style={[styles.optionButton, { backgroundColor: optionBackground, borderColor: optionBorder }]}
