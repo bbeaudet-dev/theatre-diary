@@ -309,7 +309,8 @@ export const ShowRowAccordion = memo(function ShowRowAccordion({
   const surfaceColor = Colors[theme].surface;
   const surfaceElevated = Colors[theme].surfaceElevated;
   const borderColor = Colors[theme].border;
-  const listThumbUri = item.images?.[0]?.trim();
+  const listThumbUri = item.images?.[0]?.trim() ?? "";
+  const hasListThumbImage = Boolean(listThumbUri);
 
   if (isRemoving) {
     return (
@@ -390,13 +391,22 @@ export const ShowRowAccordion = memo(function ShowRowAccordion({
           <Text style={[accordionStyles.rank, { color: mutedTextColor }]}>
             {rankLabel ?? `#${index + 1}`}
           </Text>
-          {listThumbUri ? (
-            <Image
-              source={{ uri: listThumbUri }}
-              style={[accordionStyles.listThumb, { borderColor }]}
-              contentFit="cover"
-            />
-          ) : null}
+          <View style={[accordionStyles.listThumbFrame, { borderColor }]}>
+            {hasListThumbImage ? (
+              <Image
+                source={{ uri: listThumbUri }}
+                style={accordionStyles.listThumbImage}
+                contentFit="cover"
+              />
+            ) : (
+              <View
+                style={[
+                  accordionStyles.listThumbImage,
+                  { backgroundColor: isActive ? surfaceColor : surfaceElevated },
+                ]}
+              />
+            )}
+          </View>
           <Pressable
             style={accordionStyles.showNameWrap}
             onPress={onViewShowDetails}
@@ -480,14 +490,20 @@ const accordionStyles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "bold",
     width: 36,
+    textAlign: "right",
   },
-  listThumb: {
+  listThumbFrame: {
     width: 26,
     height: 39,
     borderRadius: 4,
+    marginLeft: 8,
     marginRight: 8,
     borderWidth: StyleSheet.hairlineWidth,
-    backgroundColor: "transparent",
+    overflow: "hidden",
+  },
+  listThumbImage: {
+    width: "100%",
+    height: "100%",
   },
   showName: {
     fontSize: 15,
