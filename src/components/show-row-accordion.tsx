@@ -399,7 +399,12 @@ export const ShowRowAccordion = memo(function ShowRowAccordion({
                 contentFit="cover"
               />
             ) : (
-              <View style={[accordionStyles.listThumbImage, { backgroundColor: surfaceColor }]} />
+              <View
+                style={[
+                  accordionStyles.listThumbImage,
+                  { backgroundColor: isActive ? surfaceColor : surfaceElevated },
+                ]}
+              />
             )}
           </View>
           <Pressable
