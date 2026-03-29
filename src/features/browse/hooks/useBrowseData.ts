@@ -30,7 +30,20 @@ export function useBrowseData(search: string) {
       [
         {
           title: "Now Running",
-          data: visibleProductions.filter((p) => getProductionStatus(p, today) === "open"),
+          data: (() => {
+            const open = visibleProductions.filter((p) => getProductionStatus(p, today) === "open");
+            // Productions with a closing date within 30 days float to the top, sorted soonest-first.
+            const closingSoon = open
+              .filter((p) => {
+                if (!p.closingDate || p.closingDate < today) return false;
+                const ms = new Date(p.closingDate + "T00:00:00Z").getTime() - new Date(today + "T00:00:00Z").getTime();
+                return Math.ceil(ms / (1000 * 60 * 60 * 24)) <= 30;
+              })
+              .sort((a, b) => (a.closingDate ?? "").localeCompare(b.closingDate ?? ""));
+            const closingSoonSet = new Set(closingSoon.map((p) => p._id));
+            const rest = open.filter((p) => !closingSoonSet.has(p._id));
+            return [...closingSoon, ...rest];
+          })(),
         },
         {
           title: "In Previews",
