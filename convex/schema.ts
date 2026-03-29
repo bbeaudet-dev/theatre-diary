@@ -244,4 +244,62 @@ export default defineSchema({
   })
     .index("by_createdAt", ["createdAt"])
     .index("by_actor_createdAt", ["actorUserId", "createdAt"]),
+
+  trips: defineTable({
+    userId: v.id("users"),
+    name: v.string(),
+    startDate: v.string(),
+    endDate: v.string(),
+    description: v.optional(v.string()),
+    isPublic: v.boolean(),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_user", ["userId"])
+    .index("by_user_startDate", ["userId", "startDate"]),
+
+  // Free-text notes added to a specific day of a trip (flights, meals, etc.)
+  tripDayNotes: defineTable({
+    tripId: v.id("trips"),
+    userId: v.id("users"),
+    dayDate: v.string(),
+    text: v.string(),
+    // Optional time in 24h "HH:MM" format
+    time: v.optional(v.string()),
+    createdAt: v.number(),
+  })
+    .index("by_trip", ["tripId"])
+    .index("by_trip_day", ["tripId", "dayDate"]),
+
+  // One row per show added to a trip. dayDate is set when the show is assigned to a day.
+  tripShows: defineTable({
+    tripId: v.id("trips"),
+    userId: v.id("users"),
+    showId: v.id("shows"),
+    dayDate: v.optional(v.string()),
+    order: v.optional(v.number()),
+    notes: v.optional(v.string()),
+    createdAt: v.number(),
+  })
+    .index("by_trip", ["tripId"])
+    .index("by_trip_day", ["tripId", "dayDate"])
+    .index("by_user", ["userId"])
+    .index("by_trip_show", ["tripId", "showId"]),
+
+  tripMembers: defineTable({
+    tripId: v.id("trips"),
+    userId: v.id("users"),
+    invitedBy: v.id("users"),
+    role: v.union(v.literal("view"), v.literal("edit")),
+    // Invitation flow (accept/decline) is deferred; members added directly as "accepted" for now.
+    status: v.union(
+      v.literal("pending"),
+      v.literal("accepted"),
+      v.literal("declined")
+    ),
+    createdAt: v.number(),
+  })
+    .index("by_trip", ["tripId"])
+    .index("by_user", ["userId"])
+    .index("by_trip_user", ["tripId", "userId"]),
 });

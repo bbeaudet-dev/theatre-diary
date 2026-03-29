@@ -126,3 +126,29 @@ export const updateMyProfile = mutation({
     });
   },
 });
+
+export const searchUsers = query({
+  args: { q: v.string() },
+  handler: async (ctx, args) => {
+    const currentUserId = await getConvexUserId(ctx);
+    const trimmed = args.q.trim().toLowerCase().replace(/^@/, "");
+    if (!trimmed || trimmed.length < 2) return [];
+
+    const users = await ctx.db.query("users").collect();
+    return users
+      .filter((u: any) => {
+        if (u._id === currentUserId) return false;
+        return (
+          u.username?.toLowerCase().includes(trimmed) ||
+          u.name?.toLowerCase().includes(trimmed)
+        );
+      })
+      .slice(0, 8)
+      .map((u: any) => ({
+        _id: u._id,
+        username: u.username,
+        name: u.name,
+        avatarUrl: u.avatarImage ?? null,
+      }));
+  },
+});
