@@ -1,4 +1,5 @@
 import { useMutation, useQuery } from "convex/react";
+import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import { memo, useCallback, useRef, useState } from "react";
 import {
@@ -308,6 +309,8 @@ export const ShowRowAccordion = memo(function ShowRowAccordion({
   const surfaceColor = Colors[theme].surface;
   const surfaceElevated = Colors[theme].surfaceElevated;
   const borderColor = Colors[theme].border;
+  const listThumbUri = item.images?.[0]?.trim() ?? "";
+  const hasListThumbImage = Boolean(listThumbUri);
 
   if (isRemoving) {
     return (
@@ -388,6 +391,22 @@ export const ShowRowAccordion = memo(function ShowRowAccordion({
           <Text style={[accordionStyles.rank, { color: mutedTextColor }]}>
             {rankLabel ?? `#${index + 1}`}
           </Text>
+          <View style={[accordionStyles.listThumbFrame, { borderColor }]}>
+            {hasListThumbImage ? (
+              <Image
+                source={{ uri: listThumbUri }}
+                style={accordionStyles.listThumbImage}
+                contentFit="cover"
+              />
+            ) : (
+              <View
+                style={[
+                  accordionStyles.listThumbImage,
+                  { backgroundColor: isActive ? surfaceColor : surfaceElevated },
+                ]}
+              />
+            )}
+          </View>
           <Pressable
             style={accordionStyles.showNameWrap}
             onPress={onViewShowDetails}
@@ -419,7 +438,8 @@ const accordionStyles = StyleSheet.create({
   showRow: {
     flexDirection: "row",
     alignItems: "center",
-    padding: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
     borderRadius: 10,
     borderWidth: StyleSheet.hairlineWidth,
   },
@@ -471,6 +491,20 @@ const accordionStyles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "bold",
     width: 36,
+    textAlign: "right",
+  },
+  listThumbFrame: {
+    width: 26,
+    height: 39,
+    borderRadius: 4,
+    marginLeft: 8,
+    marginRight: 8,
+    borderWidth: StyleSheet.hairlineWidth,
+    overflow: "hidden",
+  },
+  listThumbImage: {
+    width: "100%",
+    height: "100%",
   },
   showName: {
     fontSize: 15,
@@ -478,7 +512,6 @@ const accordionStyles = StyleSheet.create({
   },
   showNameWrap: {
     flex: 1,
-    paddingVertical: 2,
   },
   chevron: {
     fontSize: 14,
